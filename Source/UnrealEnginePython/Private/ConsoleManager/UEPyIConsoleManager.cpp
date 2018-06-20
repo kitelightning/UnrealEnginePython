@@ -565,7 +565,11 @@ static PyObject *py_ue_iconsole_manager_register_command(PyObject *cls, PyObject
 	FConsoleCommandWithArgsDelegate console_delegate;
 	console_delegate.BindSP(py_delegate, &FPythonSmartConsoleDelegate::OnConsoleCommand);
 
-	if (!IConsoleManager::Get().RegisterConsoleCommand(UTF8_TO_TCHAR(key), help ? UTF8_TO_TCHAR(help) : UTF8_TO_TCHAR(key), console_delegate, 0))
+    bool bResult = false;
+    Py_BEGIN_ALLOW_THREADS;
+    bResult = IConsoleManager::Get().RegisterConsoleCommand(UTF8_TO_TCHAR(key), help ? UTF8_TO_TCHAR(help) : UTF8_TO_TCHAR(key), console_delegate, 0);
+    Py_END_ALLOW_THREADS;
+	if (!bResult)
 	{
 		return PyErr_Format(PyExc_Exception, "unable to register console command \"%s\"", key);
 	}

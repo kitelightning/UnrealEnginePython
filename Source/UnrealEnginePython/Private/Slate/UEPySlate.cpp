@@ -1541,7 +1541,9 @@ PyObject *py_unreal_engine_unregister_nomad_tab_spawner(PyObject * self, PyObjec
 
     FName tabSpawnerName = FName(UTF8_TO_TCHAR(name));
     FUnrealEnginePythonHouseKeeper::Get()->UntrackStaticSlateDelegate(FPythonSlateDelegate::TabSpawner, tabSpawnerName);
+    Py_BEGIN_ALLOW_THREADS;
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(tabSpawnerName);
+    Py_END_ALLOW_THREADS;
 
 	Py_INCREF(Py_None);
 	return Py_None;

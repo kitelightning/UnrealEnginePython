@@ -1441,7 +1441,9 @@ PyObject *py_unreal_engine_console_exec(PyObject * self, PyObject * args)
         // error!
         return NULL;
     }
+    Py_BEGIN_ALLOW_THREADS;
     GEditor->Exec(worldContext->World(), UTF8_TO_TCHAR(command), *GLog);
+    Py_END_ALLOW_THREADS;
 #else
 #include "Engine/Engine.h"
     extern ENGINE_API class UEngine* GEngine;
@@ -1459,7 +1461,9 @@ PyObject *py_unreal_engine_console_exec(PyObject * self, PyObject * args)
         // error!
         return NULL;
     }
+    Py_BEGIN_ALLOW_THREADS;
     GEngine->Exec(worldContext->World(), UTF8_TO_TCHAR(command), *GLog);
+    Py_END_ALLOW_THREADS;
 #endif
 
     Py_RETURN_NONE;

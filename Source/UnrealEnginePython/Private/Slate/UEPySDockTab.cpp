@@ -33,7 +33,7 @@ static PyObject *py_ue_sdock_tab_set_on_tab_closed(ue_PySDockTab *self, PyObject
 		return NULL;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	SDockTab::FOnTabClosedCallback onTabClosed;

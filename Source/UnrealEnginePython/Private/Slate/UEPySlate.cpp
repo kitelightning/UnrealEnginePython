@@ -1385,7 +1385,7 @@ PyObject *py_unreal_engine_add_menu_extension(PyObject * self, PyObject * args)
 	if (!menu_extension_interface)
 		return PyErr_Format(PyExc_Exception, "module %s is not supported", module);
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	TSharedRef<FPythonSlateCommands> *commands = new TSharedRef<FPythonSlateCommands>(new FPythonSlateCommands());
@@ -1418,7 +1418,7 @@ PyObject *py_unreal_engine_add_menu_bar_extension(PyObject * self, PyObject * ar
 
 	FLevelEditorModule &ExtensibleModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	TSharedRef<FPythonSlateCommands> *commands = new TSharedRef<FPythonSlateCommands>(new FPythonSlateCommands());
@@ -1451,7 +1451,7 @@ PyObject *py_unreal_engine_add_tool_bar_extension(PyObject * self, PyObject * ar
 
 	FLevelEditorModule &ExtensibleModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	TSharedRef<FPythonSlateCommands> *commands = new TSharedRef<FPythonSlateCommands>(new FPythonSlateCommands());
@@ -1479,7 +1479,7 @@ PyObject *py_unreal_engine_add_asset_view_context_menu_extension(PyObject * self
 		return NULL;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	FContentBrowserModule &ContentBrowser = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
@@ -1506,7 +1506,7 @@ PyObject *py_unreal_engine_register_nomad_tab_spawner(PyObject * self, PyObject 
 		return NULL;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
     const FName tabName = FName(UTF8_TO_TCHAR(name));
@@ -1677,7 +1677,7 @@ PyObject *py_unreal_engine_open_color_picker(PyObject *self, PyObject *args, PyO
 		return nullptr;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 	{
 		return PyErr_Format(PyExc_Exception, "on_color_committed must be a callable");
 	}

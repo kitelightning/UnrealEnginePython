@@ -6,6 +6,7 @@
 
 #include "Slate/UEPySWidget.h"
 #include "Slate/UEPySWindow.h"
+#include "Runtime/SlateRHIRenderer/Public/Interfaces/ISlateRHIRendererModule.h"
 
 static PyObject *py_ue_get_average_delta_time(PyObject *cls, PyObject * args)
 {
@@ -226,7 +227,21 @@ static PyObject *py_ue_destroy_window_immediately(PyObject *cls, PyObject * args
     Py_RETURN_NONE;
 }
 
+static PyObject *py_ue_create(PyObject *cls, PyObject * args)
+{
+#if ENGINE_MINOR_VERSION > 18
+	FSlateApplication::InitHighDPI();
+#endif
+	FSlateApplication::Create();
+
+	TSharedRef<FSlateRenderer> SlateRenderer = FModuleManager::Get().LoadModuleChecked<ISlateRHIRendererModule>("SlateRHIRenderer").CreateSlateRHIRenderer();
+	FSlateApplication::Get().InitializeRenderer(SlateRenderer);
+
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef ue_PyFSlateApplication_methods[] = {
+	{ "create", (PyCFunction)py_ue_create, METH_VARARGS | METH_CLASS, "" },
 	{ "get_average_delta_time", (PyCFunction)py_ue_get_average_delta_time, METH_VARARGS | METH_CLASS, "" },
 	{ "get_cursor_radius", (PyCFunction)py_ue_get_cursor_radius, METH_VARARGS | METH_CLASS, "" },
 	{ "get_delta_time", (PyCFunction)py_ue_get_delta_time, METH_VARARGS | METH_CLASS, "" },

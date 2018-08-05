@@ -398,15 +398,17 @@ public class UnrealEnginePython : ModuleRules
         // just for usability, report if the pythonHome is not in the system path
         string[] allPaths = System.Environment.GetEnvironmentVariable("PATH").Split(';');
         // this will transform the slashes in backslashes...
-        string checkedPath = Path.GetFullPath(basePath);
-        if (checkedPath.EndsWith("\\"))
-        {
-            checkedPath = checkedPath.Remove(checkedPath.Length - 1);
-        }
+        string checkedPath = !string.IsNullOrWhiteSpace(basePath) 
+            ? new System.Uri(Path.GetFullPath(basePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)).LocalPath
+            : basePath;
+        
         bool found = false;
         foreach (string item in allPaths)
         {
-            if (item == checkedPath || item == checkedPath + "\\")
+            string checkedItem = !string.IsNullOrWhiteSpace(item)
+                ? new System.Uri(item.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)).LocalPath
+                : item;
+            if (checkedItem == checkedPath)
             {
                 found = true;
                 break;
@@ -414,7 +416,7 @@ public class UnrealEnginePython : ModuleRules
         }
         if (!found)
         {
-            System.Console.WriteLine("[WARNING] Your Python installation is not in the system PATH environment variable.");
+            System.Console.WriteLine("[WARNING] Your Python installation ({0}) is not in the system PATH environment variable.", checkedPath);
             System.Console.WriteLine("[WARNING] Ensure your python paths are set in GlobalConfig (DefaultEngine.ini) so the path can be corrected at runtime.");
         }
         // first try with python3

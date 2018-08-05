@@ -21,13 +21,13 @@ static PyObject *py_ue_idetails_view_set_object(ue_PyIDetailsView *self, PyObjec
 		nullptr
 	};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O:set_object", kwlist, &py_in_obj, &py_force_refresh))
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OO:set_object", kwlist, &py_in_obj, &py_force_refresh))
 	{
 		return nullptr;
 	}
 
 	UObject *u_object = ue_py_check_type<UObject>(py_in_obj);
-	if (!u_object)
+	if (!u_object && py_in_obj != nullptr)
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not a UObject");
 	}

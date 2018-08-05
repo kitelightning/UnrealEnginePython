@@ -9,6 +9,7 @@ extern PyTypeObject ue_PySPythonWidgetType;
 
 class SPythonWidget : public SCompoundWidget
 {
+    using Super = SCompoundWidget;
 public:
 
 	SLATE_BEGIN_ARGS(SPythonWidget)
@@ -29,8 +30,8 @@ public:
 	{
 		FScopePythonGIL gil;
 
-		if (!PyObject_HasAttrString(self, (char *)"on_key_char"))
-			return FReply::Unhandled();
+        if (!PyObject_HasAttrString(self, (char *)"on_key_char"))
+        { return Super::OnKeyChar(MyGeometry, InCharacterEvent); }
 
 		PyObject *py_callable_on_key_char = PyObject_GetAttrString(self, (char *)"on_key_char");
 		if (!PyCalllable_Check_Extended(py_callable_on_key_char))
@@ -59,8 +60,8 @@ public:
 	{
 		FScopePythonGIL gil;
 
-		if (!PyObject_HasAttrString(self, (char *)"on_key_down"))
-			return FReply::Unhandled();
+        if (!PyObject_HasAttrString(self, (char *)"on_key_down"))
+        { return Super::OnKeyDown(MyGeometry, InKeyEvent); }
 
 		PyObject *py_callable_on_key_down = PyObject_GetAttrString(self, (char *)"on_key_down");
 		if (!PyCalllable_Check_Extended(py_callable_on_key_down))
@@ -90,7 +91,7 @@ public:
 		FScopePythonGIL gil;
 
 		if (!PyObject_HasAttrString(self, (char *)"on_mouse_move"))
-			return FReply::Unhandled();
+		{  return Super::OnMouseMove(MyGeometry, MyEvent); }
 
 		PyObject *py_callable_on_mouse_move = PyObject_GetAttrString(self, (char *)"on_mouse_move");
 		if (!PyCalllable_Check_Extended(py_callable_on_mouse_move))
@@ -120,7 +121,7 @@ public:
 		FScopePythonGIL gil;
 
 		if (!PyObject_HasAttrString(self, (char *)"on_mouse_wheel"))
-			return FReply::Unhandled();
+		{  return Super::OnMouseWheel(MyGeometry, MyEvent); }
 
 		PyObject *py_callable_on_mouse_wheel = PyObject_GetAttrString(self, (char *)"on_mouse_wheel");
 		if (!PyCalllable_Check_Extended(py_callable_on_mouse_wheel))
@@ -150,7 +151,7 @@ public:
 		FScopePythonGIL gil;
 
 		if (!PyObject_HasAttrString(self, (char *)"on_mouse_button_down"))
-			return FReply::Unhandled();
+		{  return Super::OnMouseButtonDown(MyGeometry, MyEvent); }
 
 		PyObject *py_callable_on_mouse_button_down = PyObject_GetAttrString(self, (char *)"on_mouse_button_down");
 		if (!PyCalllable_Check_Extended(py_callable_on_mouse_button_down))
@@ -180,7 +181,7 @@ public:
 		FScopePythonGIL gil;
 
 		if (!PyObject_HasAttrString(self, (char *)"on_mouse_button_up"))
-			return FReply::Unhandled();
+		{  return Super::OnMouseButtonUp(MyGeometry, MyEvent); }
 
 		PyObject *py_callable_on_mouse_button_up = PyObject_GetAttrString(self, (char *)"on_mouse_button_up");
 		if (!PyCalllable_Check_Extended(py_callable_on_mouse_button_up))
@@ -205,6 +206,36 @@ public:
 		return FReply::Handled();
 	}
 
+    virtual FReply OnMouseButtonDoubleClick(const FGeometry& MyGeometry, const FPointerEvent& MyEvent) override
+    {
+        FScopePythonGIL gil;
+
+		if (!PyObject_HasAttrString(self, (char *)"on_mouse_button_double_click"))
+		{  return Super::OnMouseButtonDoubleClick(MyGeometry, MyEvent); }
+
+		PyObject *py_callable_on_mouse_button_double_click = PyObject_GetAttrString(self, (char *)"on_mouse_button_double_click");
+		if (!PyCalllable_Check_Extended(py_callable_on_mouse_button_double_click))
+		{
+			UE_LOG(LogPython, Error, TEXT("on_mouse_button_double_click is not a callable"));
+			return FReply::Unhandled();
+		}
+
+		PyObject *ret = PyObject_CallFunction(py_callable_on_mouse_button_double_click, (char *)"OO", py_ue_new_fgeometry(MyGeometry), py_ue_new_fpointer_event(MyEvent));
+		if (!ret)
+		{
+			unreal_engine_py_log_error();
+			return FReply::Unhandled();
+		}
+
+		if (ret == Py_False)
+		{
+			Py_DECREF(ret);
+			return FReply::Unhandled();
+		}
+		Py_DECREF(ret);
+		return FReply::Handled();
+    }
+
 
 	virtual int32 OnPaint(const FPaintArgs & Args,
 		const FGeometry & AllottedGeometry,
@@ -214,7 +245,7 @@ public:
 		const FWidgetStyle & InWidgetStyle,
 		bool bParentEnabled) const override
 	{
-		int32 MaxLayer = SCompoundWidget::OnPaint(Args, AllottedGeometry, MyClippingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
+		int32 MaxLayer = Super::OnPaint(Args, AllottedGeometry, MyClippingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
 
 		FScopePythonGIL gil;
 

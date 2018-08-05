@@ -190,6 +190,7 @@ static int ue_py_spython_combo_box_init(ue_PySPythonComboBox *self, PyObject *ar
 	ue_py_slate_farguments_optional_struct("selection_change_sound_override", SelectionChangeSoundOverride, FSlateSound);
 	ue_py_slate_farguments_event("on_generate_widget", OnGenerateWidget, TSlateDelegates<TSharedPtr<FPythonItem>>::FOnGenerateWidget, OnGenerateWidget);
 	ue_py_slate_farguments_event("on_selection_changed", OnSelectionChanged, TSlateDelegates<TSharedPtr<FPythonItem>>::FOnSelectionChanged, OnSelectionChanged);
+    ue_py_slate_farguments_attribute_event("on_combo_box_opening", OnComboBoxOpening, FOnComboBoxOpening, SimpleExecuteAction);
 
 
 	ue_py_snew(SPythonComboBox);

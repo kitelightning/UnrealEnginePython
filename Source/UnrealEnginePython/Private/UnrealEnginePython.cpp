@@ -222,8 +222,15 @@ void FUnrealEnginePythonModule::StartupModule()
 #else
 		char *home = TCHAR_TO_UTF8(*PythonHome);
 #endif
-		FPlatformMisc::SetEnvironmentVar(TEXT("PYTHONHOME"), *PythonHome);
-		Py_SetPythonHome(home);
+        if (FPaths::DirectoryExists(PythonHome))
+        {
+		    FPlatformMisc::SetEnvironmentVar(TEXT("PYTHONHOME"), *PythonHome);
+		    Py_SetPythonHome(home);
+        }
+        else
+        {
+            UE_LOG(LogPython, Warning, TEXT("PythonHome Directory does not exist: '%s'"), *PythonHome);
+        }
 	}
 
 	if (GConfig->GetString(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("RelativeHome"), PythonHome, GEngineIni))
@@ -236,8 +243,15 @@ void FUnrealEnginePythonModule::StartupModule()
 #else
 		char *home = TCHAR_TO_UTF8(*PythonHome);
 #endif
-
-		Py_SetPythonHome(home);
+        if (FPaths::DirectoryExists(PythonHome))
+        {
+            FPlatformMisc::SetEnvironmentVar(TEXT("PYTHONHOME"), *PythonHome);
+		    Py_SetPythonHome(home);
+        }
+        else
+        {
+            UE_LOG(LogPython, Warning, TEXT("PythonHome Directory does not exist: '%s'"), *PythonHome);
+        }
 	}
 
 	FString IniValue;

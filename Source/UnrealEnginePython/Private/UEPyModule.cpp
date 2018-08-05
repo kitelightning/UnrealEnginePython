@@ -306,6 +306,7 @@ static PyMethodDef unreal_engine_methods[] = {
 	{ "close_editor_for_asset", py_unreal_engine_close_editor_for_asset, METH_VARARGS, "" },
 	{ "close_all_asset_editors", py_unreal_engine_close_all_asset_editors, METH_VARARGS, "" },
 	{ "allow_actor_script_execution_in_editor", py_unreal_engine_allow_actor_script_execution_in_editor , METH_VARARGS, "" },
+    { "get_geditor", py_unreal_engine_get_geditor, METH_VARARGS, "" },
 	{ "get_editor_world", py_unreal_engine_get_editor_world, METH_VARARGS, "" },
 	{ "editor_get_selected_actors", py_unreal_engine_editor_get_selected_actors, METH_VARARGS, "" },
 	{ "editor_get_actors_in_folder", py_unreal_engine_editor_get_actors_in_folder, METH_VARARGS, "" },
@@ -1463,23 +1464,74 @@ UClass *unreal_engine_new_uclass(char *name, UClass *outer_parent)
 		is_overwriting = true;
 	}
 
-	if (is_overwriting && new_object->Children)
-	{
-		UField *u_field = new_object->Children;
-		while (u_field)
-		{
-			if (u_field->IsA<UFunction>())
-			{
-				UE_LOG(LogPython, Warning, TEXT("removing function %s"), *u_field->GetName());
-				new_object->RemoveFunctionFromFunctionMap((UFunction *)u_field);
-				FLinkerLoad::InvalidateExport(u_field);
-			}
-			u_field = u_field->Next;
-		}
-		new_object->ClearFunctionMapsCaches();
-		new_object->PurgeClass(true);
-		new_object->Children = nullptr;
-		new_object->ClassAddReferencedObjects = parent->ClassAddReferencedObjects;
+    //NOTE: ikrimae: #ThirdParty-Python: Subclassed Python objects need to be better supported. 
+    //               Sample pseudocode but needs to be verified. Ex to follow: FPythonGeneratedClassUtil::PrepareOldClassForReinstancing
+    //if (UPythonClass* oldPythonClass = is_overwriting ? Cast<UPythonClass>(new_object) : nullptr)
+    //{
+    //    const FString oldClassName = MakeUniqueObjectName(oldPythonClass->GetOuter(), oldPythonClass->GetClass(), *FString::Printf(TEXT("%s_REINST"), *oldPythonClass->GetName())).ToString();
+    //    oldPythonClass->ClassFlags |= CLASS_NewerVersionExists;
+    //    oldPythonClass->SetFlags(RF_NewerVersionExists);
+    //    oldPythonClass->ClearFlags(RF_Public | RF_Standalone);
+    //    oldPythonClass->Rename(*oldClassName, nullptr, REN_DontCreateRedirectors);
+    //
+    //    TArray<TPair<UPythonClass*, UPythonClass*>> pendingOldNewClassPairs;
+    //    
+    //    // This code should be called at the end of the function
+    //    auto doReinstancing = [](UPythonClass* oldPythonClass, UPythonClass* newPythonClass) {
+    //        pendingOldNewClassPairs.Add(oldPythonClass,newPythonClass)
+    //        TArray<UClass*> derivedClasses;
+    //        GetDerivedClasses(oldPythonClass, derivedClasses, /*bRecursive*/false);
+    //        for(UClass* oldDerivedClass : derivedClasses)
+    //        {
+    //            UPythonClass* oldDerivedPythonClass = Cast<UPythonClass>(oldDerivedClass);
+    //            if (!oldDerivedPythonClass || oldDerivedClass->HasAnyClassFlags(CLASS_Native))
+    //            { continue; }
+    //
+    //            const FString oldDerivedClassName = MakeUniqueObjectName(oldDerivedPythonClass->GetOuter(), oldDerivedPythonClass->GetClass(), *FString::Printf(TEXT("%s_REINST"), *oldDerivedPythonClass->GetName())).ToString();
+    //            oldDerivedPythonClass->ClassFlags |= CLASS_NewerVersionExists;
+    //            oldDerivedPythonClass->SetFlags(RF_NewerVersionExists);
+    //            oldDerivedPythonClass->ClearFlags(RF_Public | RF_Standalone);
+    //            oldDerivedPythonClass->Rename(*oldDerivedClassName, nullptr, REN_DontCreateRedirectors);
+    //
+    //            UPythonClass* newDerivedPythonClass = CreateNewPythonClassBasedOnAndDuplicateProps(oldDerivedPythonClass);
+    //
+    //            // Finalize the class
+    //            newDerivedPythonClass->Bind();
+    //            newDerivedPythonClass->StaticLink(true);
+    //            newDerivedPythonClass->AssembleReferenceTokenStream();
+    //
+    //            //Recursively do same reinstancing
+    //            pendingOldNewClassPairs.Add(oldDerivedPythonClass, newDerivedPythonClass)
+    //            doReinstancing(oldDerivedPythonClass, newDerivedPythonClass);
+    //        }
+    //    };
+    //
+    //    FTimerManager::SetTimerForNextTick([] {
+    //        for (const auto& reinstancePair : pendingOldNewClassPairs)
+    //        {
+    //            FCoreUObjectDelegates::RegisterClassForHotReloadReinstancingDelegate.Broadcast(reinstancePair.Key, reinstancePair.Value);
+    //        }
+    //        FCoreUObjectDelegates::ReinstanceHotReloadedClassesDelegate.Broadcast();
+    //    });
+    //}
+
+    if (is_overwriting && new_object->Children)
+    {
+        UField *u_field = new_object->Children;
+        while (u_field)
+        {
+            if (u_field->IsA<UFunction>())
+            {
+                UE_LOG(LogPython, Warning, TEXT("removing function %s"), *u_field->GetName());
+                new_object->RemoveFunctionFromFunctionMap((UFunction *)u_field);
+                FLinkerLoad::InvalidateExport(u_field);
+            }
+            u_field = u_field->Next;
+        }
+        new_object->ClearFunctionMapsCaches();
+        new_object->PurgeClass(true);
+        new_object->Children = nullptr;
+        new_object->ClassAddReferencedObjects = parent->ClassAddReferencedObjects;
 	}
 
 	new_object->PropertiesSize = 0;
@@ -2646,7 +2698,7 @@ bool ue_py_convert_pyobject(PyObject *py_obj, UProperty *prop, uint8 *buffer, in
 // check if a python object is a wrapper to a UObject
 ue_PyUObject *ue_is_pyuobject(PyObject *obj)
 {
-	if (!PyObject_IsInstance(obj, (PyObject *)&ue_PyUObjectType))
+	if (obj == nullptr || !PyObject_IsInstance(obj, (PyObject *)&ue_PyUObjectType))
 		return nullptr;
 	return (ue_PyUObject *)obj;
 }

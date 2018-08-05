@@ -395,7 +395,7 @@ PyObject *py_ue_wrap_uscriptstruct(UScriptStruct *u_struct, uint8 *data)
 
 ue_PyUScriptStruct *py_ue_is_uscriptstruct(PyObject *obj)
 {
-	if (!PyObject_IsInstance(obj, (PyObject *)&ue_PyUScriptStructType))
+	if (!obj || !PyObject_IsInstance(obj, (PyObject *)&ue_PyUScriptStructType))
 		return nullptr;
 	return (ue_PyUScriptStruct *)obj;
 }

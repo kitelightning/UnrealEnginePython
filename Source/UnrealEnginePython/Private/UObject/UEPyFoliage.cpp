@@ -3,6 +3,7 @@
 #include "Runtime/Foliage/Public/FoliageType.h"
 #include "Runtime/Foliage/Public/InstancedFoliageActor.h"
 #include "Wrappers/UEPyFFoliageInstance.h"
+#include "Engine/StaticMesh.h"
 
 PyObject *py_ue_get_instanced_foliage_actor_for_current_level(ue_PyUObject *self, PyObject * args)
 {

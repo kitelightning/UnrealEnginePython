@@ -1160,7 +1160,7 @@ private:
 PyObject *py_unreal_engine_create_detail_view(PyObject *self, PyObject * args, PyObject *kwargs)
 {
 
-	PyObject *py_object;
+	PyObject *py_object = nullptr;
 	PyObject *py_allow_search = nullptr;
 
 	PyObject *py_update_from_selection = nullptr;

@@ -1,6 +1,7 @@
+#include "UEPyFbxObject.h"
+
 #if ENGINE_MINOR_VERSION > 12
 #if WITH_EDITOR
-#include "UEPyFbxObject.h"
 #include "UEPyFbx.h"
 
 #include "Runtime/Engine/Classes/Curves/RichCurve.h"

@@ -179,8 +179,15 @@ PyObject *py_ue_remove_viewport_widget_content(ue_PyUObject *self, PyObject * ar
 	}
 
 	UGameViewportClient *viewport = ue_py_check_type<UGameViewportClient>(self);
-	if (!viewport)
-		return PyErr_Format(PyExc_Exception, "object is not a GameViewportClient");
+    if (!viewport)
+    {
+        UWorld *world = ue_py_check_type<UWorld>(self);
+        if (!world)
+            return PyErr_Format(PyExc_Exception, "object is not a GameViewportClient or a UWorld");
+        viewport = world->GetGameViewport();
+        if (!viewport)
+            return PyErr_Format(PyExc_Exception, "cannot retrieve GameViewportClient from UWorld");
+    }
 
 	TSharedPtr<SWidget> content = py_ue_is_swidget<SWidget>(py_widget);
 	if (!content.IsValid())

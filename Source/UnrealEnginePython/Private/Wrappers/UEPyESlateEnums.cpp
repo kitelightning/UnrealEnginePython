@@ -5,6 +5,7 @@
 #if WITH_EDITOR
 #include "ISequencer.h"
 #include "IDetailsView.h"
+#include "UnrealWidget.h"
 #endif
 #include <ObjectMacros.h>
 #include "SSplitter.h"

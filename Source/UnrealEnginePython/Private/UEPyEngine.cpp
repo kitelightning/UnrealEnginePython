@@ -688,7 +688,7 @@ PyObject *py_unreal_engine_get_mutable_default(PyObject * self, PyObject * args)
 {
 
 	PyObject *obj;
-	if (!PyArg_ParseTuple(args, "O|Os:new_object", &obj))
+	if (!PyArg_ParseTuple(args, "O|Os:get_mutable_default", &obj))
 	{
 		return NULL;
 	}

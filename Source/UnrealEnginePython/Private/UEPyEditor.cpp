@@ -40,6 +40,7 @@
 #include "Wrappers/UEPyFEditorViewportClient.h"
 
 #include "UEPyIPlugin.h"
+#include "EditorActorFolders.h"
 
 PyObject *py_unreal_engine_editor_play_in_viewport(PyObject * self, PyObject * args)
 {
@@ -100,6 +101,14 @@ PyObject *py_unreal_engine_request_play_session(PyObject * self, PyObject * args
 
 	Py_RETURN_NONE;
 
+}
+
+PyObject *py_unreal_engine_get_geditor(PyObject * self, PyObject * args)
+{
+    if (!GEditor)
+        return PyErr_Format(PyExc_Exception, "no GEditor found");
+
+    Py_RETURN_UOBJECT(GEditor);
 }
 
 
@@ -174,17 +183,19 @@ PyObject *py_unreal_engine_editor_get_actors_in_folder(PyObject * self, PyObject
 
 	PyObject *actors = PyList_New(0);
 
-	FName FolderPath(folder_path);
+	const FName FolderPath(folder_path);
+    const FString FolderPathAsStr = FolderPath.ToString();
 	UWorld *world = GEditor->GetEditorWorldContext().World();
 
 	for (AActor* actor : TActorRange<AActor>(world))
 	{
-		//NOTE: WORKAROUND: UE4 Editor does not update folder path for children after attachment. So some childnodes in a folder
-		//                  may erroneously have an outdated folder path
-		if (actor->GetFolderPath() == FolderPath)
+		if (   actor->GetFolderPath() == FolderPath
+            || FActorFolders::PathIsChildOf(actor->GetFolderPath().ToString(), FolderPathAsStr))
 		{
-			if (!actor->IsA<AActor>())
-				continue;
+		    //NOTE: WORKAROUND: UE4 Editor does not update folder path for children after attachment. So some childnodes in a folder
+		    //                  may erroneously have an outdated folder path
+            actor->SetFolderPath_Recursively(actor->GetFolderPath());
+
 			ue_PyUObject *item = ue_get_python_uobject(actor);
 			if (item)
 				PyList_Append(actors, (PyObject *)item);

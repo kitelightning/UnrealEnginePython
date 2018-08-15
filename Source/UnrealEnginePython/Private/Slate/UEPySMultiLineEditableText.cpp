@@ -109,12 +109,24 @@ static int ue_py_smulti_line_editable_text_init(ue_PySMultiLineEditableText *sel
 
 	ue_py_slate_setup_farguments(SMultiLineEditableText);
 
-	ue_py_slate_farguments_optional_bool("allow_context_menu", AllowContextMenu);
-	ue_py_slate_farguments_optional_bool("auto_wrap_text", AutoWrapText);
-	ue_py_slate_farguments_optional_bool("is_read_only", IsReadOnly);
+    ue_py_slate_farguments_attribute_text("text", Text);
+    ue_py_slate_farguments_attribute_text("hint_text", HintText);
+    ue_py_slate_farguments_attribute_text("search_text", SearchText);
+    ue_py_slate_farguments_attribute_float("wrap_text_at", WrapTextAt);
+    ue_py_slate_farguments_attribute_bool("auto_wrap_text", AutoWrapText);
+    ue_py_slate_farguments_attribute_enum("wrapping_policy", WrappingPolicy, ETextWrappingPolicy);
 	ue_py_slate_farguments_optional_struct_ptr("text_style", TextStyle, FTextBlockStyle);
-
-	ue_py_slate_farguments_text("text", Text);
+    ue_py_slate_farguments_attribute_struct("font", Font, FSlateFontInfo);
+    ue_py_slate_farguments_attribute_struct("margin", Margin, FMargin);
+    ue_py_slate_farguments_attribute_float("line_height_percentage", LineHeightPercentage);
+    ue_py_slate_farguments_attribute_enum("justification", Justification, ETextJustify::Type);
+    ue_py_slate_farguments_attribute_bool("is_read_only", IsReadOnly);
+    ue_py_slate_farguments_attribute_bool("allow_multiline", AllowMultiLine);
+    ue_py_slate_farguments_attribute_bool("select_all_text_when_focused", SelectAllTextWhenFocused);
+    ue_py_slate_farguments_attribute_bool("clear_text_selection_on_focus_loss", ClearTextSelectionOnFocusLoss);
+    ue_py_slate_farguments_attribute_bool("revert_text_on_escape", RevertTextOnEscape);
+    ue_py_slate_farguments_attribute_bool("clear_keyboard_focus_on_commit", ClearKeyboardFocusOnCommit);
+    ue_py_slate_farguments_attribute_bool("allow_context_menu", AllowContextMenu);
 
 	ue_py_snew(SMultiLineEditableText);
 	return 0;

@@ -33,11 +33,13 @@ void UPythonDelegate::ProcessEvent(UFunction *function, void *Parms)
 
 	if (signature_set)
 	{
-		py_args = PyTuple_New(signature->NumParms);
-		Py_ssize_t argn = 0;
-
-		TFieldIterator<UProperty> PArgs(signature);
-		for (; PArgs && argn < signature->NumParms && ((PArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++PArgs)
+		Py_ssize_t argn = 0;        
+        for (TFieldIterator<UProperty> PArgs(signature); PArgs && argn < signature->NumParms && ((PArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++PArgs)
+        { argn++; }
+        
+		py_args = PyTuple_New(argn);
+        argn = 0;
+		for (TFieldIterator<UProperty> PArgs(signature); PArgs && argn < signature->NumParms && ((PArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++PArgs)
 		{
 			UProperty *prop = *PArgs;
 			PyObject *arg = ue_py_convert_property(prop, (uint8 *)Parms, 0);
@@ -60,16 +62,21 @@ void UPythonDelegate::ProcessEvent(UFunction *function, void *Parms)
 		return;
 	}
 	// currently useless as events do not return a value
-	/*
 	if (signature_set) {
 		UProperty *return_property = signature->GetReturnProperty();
 		if (return_property && signature->ReturnValueOffset != MAX_uint16) {
-			if (!ue_py_convert_pyobject(ret, return_property, (uint8 *)Parms)) {
+#if defined(UEPY_MEMORY_DEBUG)
+            UE_LOG(LogPython, Warning, TEXT("FOUND RETURN VALUE"));
+#endif
+            if (ue_py_convert_pyobject(ret, return_property, (uint8 *)Parms, 0)) {
+                // No need to copy value to stack result value
+                //FMemory::Memcpy(RESULT_PARAM, Parms + signature->ReturnValueOffset, return_property->ElementSize);
+            }
+            else {
 				UE_LOG(LogPython, Error, TEXT("Invalid return value type for delegate"));
 			}
 		}
 	}
-	*/
 	Py_DECREF(ret);
 }
 

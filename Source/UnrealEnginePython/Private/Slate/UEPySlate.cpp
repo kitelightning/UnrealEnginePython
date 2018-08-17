@@ -1228,6 +1228,7 @@ PyObject *py_unreal_engine_create_structure_detail_view(PyObject *self, PyObject
 	char     *py_name_area_settings = nullptr;
 	PyObject *py_hide_selection_tip = nullptr;
 	PyObject *py_search_initial_key_focus = nullptr;
+    char     *py_custom_name = nullptr;
 
 	char *kwlist[] = {
 		(char*)"struct_data",
@@ -1237,10 +1238,11 @@ PyObject *py_unreal_engine_create_structure_detail_view(PyObject *self, PyObject
 		(char *)"name_area_settings",
 		(char *)"hide_selection_tip",
 		(char *)"search_initial_key_focus",
+        (char *)"custom_name",
 		nullptr };
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOOsOO:create_structure_detail_view", kwlist,
-		&py_object, &py_allow_search, &py_update_from_selection, &py_lockable, &py_name_area_settings, &py_hide_selection_tip, &py_search_initial_key_focus))
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOOsOOs:create_structure_detail_view", kwlist,
+		&py_object, &py_allow_search, &py_update_from_selection, &py_lockable, &py_name_area_settings, &py_hide_selection_tip, &py_search_initial_key_focus, &py_custom_name))
 	{
 		return nullptr;
 	}
@@ -1265,6 +1267,7 @@ PyObject *py_unreal_engine_create_structure_detail_view(PyObject *self, PyObject
 		else if (FCString::Stricmp(*name_area_string, TEXT("ComponentsAndActorsUseNameArea")) == 0) { return FDetailsViewArgs::ENameAreaSettings::ComponentsAndActorsUseNameArea; }
 		else { return FDetailsViewArgs::ENameAreaSettings::ActorsUseNameArea; }
 	}();
+    const FText custom_name = py_custom_name ? FText::FromString(FString(UTF8_TO_TCHAR(py_custom_name))) : FText::GetEmpty();
 	FStructureDetailsViewArgs struct_view_args;
 	{
 		struct_view_args.bShowObjects = true;
@@ -1287,7 +1290,7 @@ PyObject *py_unreal_engine_create_structure_detail_view(PyObject *self, PyObject
 	}
 
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	ret->istructure_details_view = PropertyEditorModule.CreateStructureDetailView(view_args, struct_view_args, struct_scope);
+	ret->istructure_details_view = PropertyEditorModule.CreateStructureDetailView(view_args, struct_view_args, struct_scope, custom_name);
     //ret->istructure_details_view->GetOnFinishedChangingPropertiesDelegate().AddLambda([ret](const FPropertyChangedEvent& ChangeEvent) {
     //    //NOTE: Kind of risque but YOLO
     //    if (ret->istructure_details_view.IsValid() && ret->ue_py_struct != nullptr 

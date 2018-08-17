@@ -14,6 +14,8 @@
 #include "SDockTab.h"
 #include "RHIDefinitions.h"
 #include "SceneTypes.h"
+#include "Overscroll.h"
+
 
 static PyGetSetDef ue_PyESlateEnums_getseters[] = {
 	{ NULL }  /* Sentinel */
@@ -249,6 +251,13 @@ void ue_python_init_eslate_enums(PyObject *ue_module)
                 'IncludeDeprecated',
                 'ExcludeInterfaces',
                 'IncludeInterfaces',
+                ]),
+
+        EnumDef(name='EAllowOverscroll',
+                cppNameScope='EAllowOverscroll',
+                values=[
+                    'Yes',
+                    'No',
                 ]),
     ]    
 
@@ -564,6 +573,19 @@ void ue_python_init_eslate_enums(PyObject *ue_module)
         PyObject_SetAttrString((PyObject*)native_EFieldIteratorFlags, "IncludeDeprecated", PyLong_FromLong((int)EFieldIteratorFlags::IncludeDeprecated));
         PyObject_SetAttrString((PyObject*)native_EFieldIteratorFlags, "ExcludeInterfaces", PyLong_FromLong((int)EFieldIteratorFlags::ExcludeInterfaces));
         PyObject_SetAttrString((PyObject*)native_EFieldIteratorFlags, "IncludeInterfaces", PyLong_FromLong((int)EFieldIteratorFlags::IncludeInterfaces));
+    }
+
+    // Enum Wrapper: EAllowOverscroll
+    {
+        PyObject* native_EAllowOverscroll = PyDict_GetItemString(unreal_engine_dict, "EAllowOverscroll");
+        if (native_EAllowOverscroll == nullptr)
+        {
+            native_EAllowOverscroll = ue_PyESlateEnums_new(&ue_PyESlateEnumsType, nullptr, nullptr);
+            PyDict_SetItemString(unreal_engine_dict, "EAllowOverscroll", (PyObject*)native_EAllowOverscroll);
+        }
+
+        PyObject_SetAttrString((PyObject*)native_EAllowOverscroll, "Yes"            , PyLong_FromLong((int)EAllowOverscroll::Yes));
+        PyObject_SetAttrString((PyObject*)native_EAllowOverscroll, "No"             , PyLong_FromLong((int)EAllowOverscroll::No));
     }
 
     #if WITH_EDITOR

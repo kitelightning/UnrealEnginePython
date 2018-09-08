@@ -2226,40 +2226,65 @@ PyObject *ue_py_convert_property(UProperty *prop, uint8 *buffer, int32 index)
 	{
 		if (auto casted_struct = Cast<UScriptStruct>(casted_prop->Struct))
 		{
-			// check for FVector
-			if (casted_struct == TBaseStructure<FVector>::Get())
-			{
-				return py_ue_new_fvector_ptr(casted_prop->ContainerPtrToValuePtr<FVector>(buffer, index));
-			}
-			if (casted_struct == TBaseStructure<FRotator>::Get())
-			{
-				return py_ue_new_frotator_ptr(casted_prop->ContainerPtrToValuePtr<FRotator>(buffer, index));
-			}
-            if (casted_struct == TBaseStructure<FQuat>::Get())
+            PyObject *pyStructVal = [&] {
+			    // check for FVector
+			    if (casted_struct == TBaseStructure<FVector>::Get())
+			    {
+				    return py_ue_new_fvector_ptr(casted_prop->ContainerPtrToValuePtr<FVector>(buffer, index));
+			    }
+			    if (casted_struct == TBaseStructure<FRotator>::Get())
+			    {
+				    return py_ue_new_frotator_ptr(casted_prop->ContainerPtrToValuePtr<FRotator>(buffer, index));
+			    }
+                if (casted_struct == TBaseStructure<FQuat>::Get())
+                {
+                    return py_ue_new_fquat_ptr(casted_prop->ContainerPtrToValuePtr<FQuat>(buffer, index));
+			    }
+			    if (casted_struct == TBaseStructure<FTransform>::Get())
+			    {
+				    return py_ue_new_ftransform_ptr(casted_prop->ContainerPtrToValuePtr<FTransform>(buffer, index));
+			    }
+			    if (casted_struct == FHitResult::StaticStruct())
+			    {
+				    FHitResult hit = *casted_prop->ContainerPtrToValuePtr<FHitResult>(buffer, index);
+				    return py_ue_new_fhitresult(hit);
+			    }
+			    if (casted_struct == TBaseStructure<FColor>::Get())
+			    {
+				    FColor color = *casted_prop->ContainerPtrToValuePtr<FColor>(buffer, index);
+				    return py_ue_new_fcolor(color);
+			    }
+			    if (casted_struct == TBaseStructure<FLinearColor>::Get())
+			    {
+				    FLinearColor color = *casted_prop->ContainerPtrToValuePtr<FLinearColor>(buffer, index);
+				    return py_ue_new_flinearcolor(color);
+			    }
+			    return py_ue_new_uscriptstruct(casted_struct, casted_prop->ContainerPtrToValuePtr<uint8>(buffer, index));
+            }();
+
+            // Structs by default now point to memory vs. copying. For functions with struct out/return params,
+            // this points to stack memory that gets destroyed right after the python call finishes up.
+            // We need to manually copy out the struct.
+            // Also annoyingly, some of these structs (like FHitResult) are not exposed as ScriptStructs to python
+            // so we have to handle this edge case. Also means won't be able to update the memory they reference
+            // They should be converted to follow same pattern as FTransform
             {
-                return py_ue_new_fquat_ptr(casted_prop->ContainerPtrToValuePtr<FQuat>(buffer, index));
-			}
-			if (casted_struct == TBaseStructure<FTransform>::Get())
-			{
-				return py_ue_new_ftransform_ptr(casted_prop->ContainerPtrToValuePtr<FTransform>(buffer, index));
-			}
-			if (casted_struct == FHitResult::StaticStruct())
-			{
-				FHitResult hit = *casted_prop->ContainerPtrToValuePtr<FHitResult>(buffer, index);
-				return py_ue_new_fhitresult(hit);
-			}
-			if (casted_struct == TBaseStructure<FColor>::Get())
-			{
-				FColor color = *casted_prop->ContainerPtrToValuePtr<FColor>(buffer, index);
-				return py_ue_new_fcolor(color);
-			}
-			if (casted_struct == TBaseStructure<FLinearColor>::Get())
-			{
-				FLinearColor color = *casted_prop->ContainerPtrToValuePtr<FLinearColor>(buffer, index);
-				return py_ue_new_flinearcolor(color);
-			}
-			return py_ue_new_uscriptstruct(casted_struct, casted_prop->ContainerPtrToValuePtr<uint8>(buffer, index));
-		}
+                const bool bNeedsCopy = 
+                       (prop->GetPropertyFlags() & (CPF_ReturnParm|CPF_OutParm)) != 0
+                    && (prop->GetPropertyFlags() & (CPF_ReferenceParm         )) == 0;
+
+                PyObject *retObj                   = pyStructVal;
+                ue_PyUScriptStruct *pyScriptStruct = py_ue_is_uscriptstruct(pyStructVal);
+                if (pyScriptStruct && bNeedsCopy)
+                {
+                    retObj = py_ue_uscriptstruct_clone(pyScriptStruct, nullptr);
+                    Py_XDECREF(pyStructVal);
+                }
+
+                return retObj;
+            }
+        }
+
 		return PyErr_Format(PyExc_TypeError, "unsupported UStruct type");
 	}
 

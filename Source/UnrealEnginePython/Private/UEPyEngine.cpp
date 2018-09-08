@@ -28,6 +28,8 @@
 #include "Runtime/Core/Public/Mac/CocoaThread.h"
 #endif
 
+#include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
+#include "Runtime/CoreUObject/Public/UObject/UObjectIterator.h"
 
 PyObject *py_unreal_engine_log(PyObject * self, PyObject * args)
 {

@@ -2,6 +2,10 @@
 
 #include "UEPySCompoundWidget.h"
 #include "UEPySTableViewBase.h"
+#include "UnrealEnginePython.h"
+#include "Runtime/Slate/Public/Widgets/Views/STableRow.h"
+#include "Runtime/Slate/Public/Widgets/Views/STableViewBase.h"
+#include "Runtime/Slate/Public/Widgets/Views/SListView.h"
 
 extern PyTypeObject ue_PySCompoundWidgetType;
 extern PyTypeObject ue_PySTableViewBaseType;

@@ -3,6 +3,8 @@
 #include "UEPySWidget.h"
 #include <WidgetPath.h>
 
+#include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
+
 static PyObject *ue_PySWidget_str(ue_PySWidget *self)
 {
 #if PY_MAJOR_VERSION >= 3

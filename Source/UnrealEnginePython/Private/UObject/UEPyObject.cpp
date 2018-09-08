@@ -15,6 +15,10 @@
 #endif
 #include <ObjectMacros.h>
 
+#include "Runtime/Core/Public/Misc/OutputDeviceNull.h"
+#include "Runtime/CoreUObject/Public/Serialization/ObjectWriter.h"
+#include "Runtime/CoreUObject/Public/Serialization/ObjectReader.h"
+
 PyObject *py_ue_get_class(ue_PyUObject * self, PyObject * args)
 {
 

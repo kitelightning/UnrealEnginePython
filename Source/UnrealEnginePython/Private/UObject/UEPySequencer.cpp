@@ -42,6 +42,35 @@ namespace {
 #include "Runtime/LevelSequence/Public/LevelSequence.h"
 #include "Engine/World.h"
 
+#if ENGINE_MINOR_VERSION >= 20
+#include "Wrappers/UEPyFFrameNumber.h"
+#endif
+
+
+#if ENGINE_MINOR_VERSION >= 20
+static bool magic_get_frame_number(UMovieScene *MovieScene, PyObject *py_obj, FFrameNumber *dest)
+{
+	ue_PyFFrameNumber *py_frame_number = py_ue_is_fframe_number(py_obj);
+	if (py_frame_number)
+	{
+		*dest = py_frame_number->frame_number;
+		return true;
+	}
+
+	if (PyNumber_Check(py_obj))
+	{
+		PyObject *f_value = PyNumber_Float(py_obj);
+		float value = PyFloat_AsDouble(f_value);
+		Py_DECREF(f_value);
+		*dest = MovieScene->GetTickResolution().AsFrameNumber(value);
+		return true;
+	}
+
+	return false;
+
+}
+#endif
+
 #if WITH_EDITOR
 PyObject *py_ue_sequencer_changed(ue_PyUObject *self, PyObject * args)
 {
@@ -94,8 +123,8 @@ PyObject *py_ue_sequencer_possessable_tracks(ue_PyUObject *self, PyObject * args
 
 	ue_py_check(self);
 
-	char *guid;
-	if (!PyArg_ParseTuple(args, "s:sequencer_possessable_tracks", &guid))
+	PyObject *py_possessable;
+	if (!PyArg_ParseTuple(args, "O:sequencer_possessable_tracks", &py_possessable))
 	{
 		return NULL;
 	}
@@ -104,7 +133,25 @@ PyObject *py_ue_sequencer_possessable_tracks(ue_PyUObject *self, PyObject * args
 		return PyErr_Format(PyExc_Exception, "uobject is not a LevelSequence");
 
 	FGuid f_guid;
+	if (PyUnicodeOrString_Check(py_possessable))
+	{
+		const char *guid = UEPyUnicode_AsUTF8(py_possessable);
 	if (!FGuid::Parse(FString(guid), f_guid))
+	{
+		return PyErr_Format(PyExc_Exception, "invalid GUID");
+	}
+	}
+	else
+	{
+		FMovieScenePossessable *possessable = (FMovieScenePossessable *)do_ue_py_check_struct(py_possessable, FMovieScenePossessable::StaticStruct());
+		if (possessable)
+		{
+			f_guid = possessable->GetGuid();
+		}
+
+	}
+
+	if (!f_guid.IsValid())
 	{
 		return PyErr_Format(PyExc_Exception, "invalid GUID");
 	}
@@ -773,15 +820,78 @@ PyObject *py_ue_sequencer_set_playback_range(ue_PyUObject *self, PyObject * args
 
 	scene->SetPlaybackRange(start_time, end_time);
 #else
-	unsigned int start_frame;
-	int duration;
-	if (!PyArg_ParseTuple(args, "Ii:sequencer_set_playback_range", &start_frame, &duration))
+	PyObject *py_start;
+	PyObject *py_end;
+	if (!PyArg_ParseTuple(args, "OO:sequencer_set_playback_range", &py_start, &py_end))
 	{
 		return nullptr;
 	}
 
-	FFrameNumber StartFrame((int32)start_frame);
-	scene->SetPlaybackRange(StartFrame, duration);
+	FFrameNumber FrameStart;
+	FFrameNumber FrameEnd;
+
+	if (!magic_get_frame_number(scene, py_start, &FrameStart))
+		return PyErr_Format(PyExc_Exception, "range must use float or FrameNumber");
+
+	if (!magic_get_frame_number(scene, py_end, &FrameEnd))
+		return PyErr_Format(PyExc_Exception, "range must use float or FrameNumber");
+
+	scene->SetPlaybackRange(TRange<FFrameNumber>::Inclusive(FrameStart, FrameEnd));
+
+#endif
+
+	Py_RETURN_NONE;
+}
+
+PyObject *py_ue_sequencer_set_section_range(ue_PyUObject *self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	UMovieSceneSection *section = ue_py_check_type<UMovieSceneSection>(self);
+	if (!section)
+		return PyErr_Format(PyExc_Exception, "uobject is not a MovieSceneSection");
+
+#if ENGINE_MINOR_VERSION < 20
+	float start_time;
+	float end_time;
+	if (!PyArg_ParseTuple(args, "ff:sequencer_set_section_range", &start_time, &end_time))
+	{
+		return nullptr;
+	}
+
+#if ENGINE_MINOR_VERSION > 17
+	section->SetRange(TRange<float>::Inclusive(start_time, end_time));
+#else
+	section->SetRange(TRange<float>(TRangeBound<float>::Inclusive(start_time), TRangeBound<float>::Inclusive(end_time)));
+#endif
+
+
+#else
+	PyObject *py_start;
+	PyObject *py_end;
+	if (!PyArg_ParseTuple(args, "OO:sequencer_set_section_range", &py_start, &py_end))
+	{
+		return nullptr;
+	}
+
+	UMovieSceneTrack *Track = section->GetTypedOuter<UMovieSceneTrack>();
+	if (!Track)
+		return PyErr_Format(PyExc_Exception, "unable to retrieve track from section");
+	UMovieScene *MovieScene = Track->GetTypedOuter<UMovieScene>();
+	if (!MovieScene)
+		return PyErr_Format(PyExc_Exception, "unable to retrieve scene from section");
+
+	FFrameNumber FrameStart;
+	FFrameNumber FrameEnd;
+
+	if (!magic_get_frame_number(MovieScene, py_start, &FrameStart))
+		return PyErr_Format(PyExc_Exception, "range must use float or FrameNumber");
+
+	if (!magic_get_frame_number(MovieScene, py_end, &FrameEnd))
+		return PyErr_Format(PyExc_Exception, "range must use float or FrameNumber");
+
+	section->SetRange(TRange<FFrameNumber>::Inclusive(FrameStart, FrameEnd));
 #endif
 
 	Py_RETURN_NONE;
@@ -793,29 +903,33 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 
 	ue_py_check(self);
 
-
+	float time;
 	PyObject *py_value;
 	int interpolation = 0;
 	PyObject *py_unwind = nullptr;
 
-#if ENGINE_MINOR_VERSION < 20
-	float time;
 	if (!PyArg_ParseTuple(args, "fO|iO:sequencer_section_add_key", &time, &py_value, &interpolation, &py_unwind))
 	{
 		return nullptr;
 	}
-#else
-	unsigned int frame_number;
-	if (!PyArg_ParseTuple(args, "IO|iO:sequencer_section_add_key", &frame_number, &py_value, &interpolation, &py_unwind))
-	{
-		return nullptr;
-	}
-#endif
 
-	if (!self->ue_object->IsA<UMovieSceneSection>())
+	UMovieSceneSection *section = ue_py_check_type<UMovieSceneSection>(self);
+	if (!section)
 		return PyErr_Format(PyExc_Exception, "uobject is not a MovieSceneSection");
 
-	UMovieSceneSection *section = (UMovieSceneSection *)self->ue_object;
+#if ENGINE_MINOR_VERSION >= 20
+	UMovieSceneTrack *Track = section->GetTypedOuter<UMovieSceneTrack>();
+	if (!Track)
+		return PyErr_Format(PyExc_Exception, "unable to retrieve track from section");
+	UMovieScene *MovieScene = Track->GetTypedOuter<UMovieScene>();
+	if (!MovieScene)
+		return PyErr_Format(PyExc_Exception, "unable to retrieve scene from section");
+
+	FFrameNumber FrameNumber = MovieScene->GetTickResolution().AsFrameNumber(time);
+	EMovieSceneKeyInterpolation InterpolationMode = (EMovieSceneKeyInterpolation)interpolation;
+
+	section->Modify();
+#endif
 
 	if (auto section_float = Cast<UMovieSceneFloatSection>(section))
 	{
@@ -826,14 +940,31 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 			Py_DECREF(f_value);
 #if ENGINE_MINOR_VERSION < 20
 			section_float->AddKey(time, value, (EMovieSceneKeyInterpolation)interpolation);
-			Py_RETURN_NONE;
 #else
-			FFrameNumber FrameNum((int32)frame_number);
 			FMovieSceneFloatChannel &Channel = (FMovieSceneFloatChannel &)section_float->GetChannel();
-			int32 RetValue = Channel.AddCubicKey(FrameNum, value);
+			int32 RetValue = -1;
+			switch (InterpolationMode)
+			{
+			case(EMovieSceneKeyInterpolation::Auto):
+				RetValue = Channel.AddCubicKey(FrameNumber, value, RCTM_Auto);
+				break;
+			case(EMovieSceneKeyInterpolation::User):
+				RetValue = Channel.AddCubicKey(FrameNumber, value, RCTM_User);
+			case(EMovieSceneKeyInterpolation::Break):
+				RetValue = Channel.AddCubicKey(FrameNumber, value, RCTM_Break);
+				break;
+			case(EMovieSceneKeyInterpolation::Linear):
+				RetValue = Channel.AddLinearKey(FrameNumber, value);
+				break;
+			case(EMovieSceneKeyInterpolation::Constant):
+				RetValue = Channel.AddConstantKey(FrameNumber, value);
+				break;
+			default:
+				return PyErr_Format(PyExc_Exception, "unsupported interpolation");
+			}
 			return PyLong_FromLong(RetValue);
 #endif
-
+			Py_RETURN_NONE;
 		}
 	}
 
@@ -847,8 +978,8 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 #if ENGINE_MINOR_VERSION < 20
 			section_bool->AddKey(time, value, (EMovieSceneKeyInterpolation)interpolation);
 #else
-			FFrameNumber FrameNum((int32)frame_number);
-			int32 RetValue = section_bool->GetChannel().GetData().AddKey(FrameNum, value);
+			FMovieSceneBoolChannel& Channel = section_bool->GetChannel();
+			int32 RetValue = Channel.GetData().AddKey(FrameNumber, value);
 			return PyLong_FromLong(RetValue);
 #endif
 			Py_RETURN_NONE;
@@ -884,23 +1015,82 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 			section_transform->AddKey(time, sx, (EMovieSceneKeyInterpolation)interpolation);
 			section_transform->AddKey(time, sy, (EMovieSceneKeyInterpolation)interpolation);
 			section_transform->AddKey(time, sz, (EMovieSceneKeyInterpolation)interpolation);
-#else
-			FFrameNumber FrameNum((int32)frame_number);
-			int32 RetValueTX = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(0)->AddCubicKey(FrameNum, transform.GetLocation().X);
-			int32 RetValueTY = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(1)->AddCubicKey(FrameNum, transform.GetLocation().Y);
-			int32 RetValueTZ = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(2)->AddCubicKey(FrameNum, transform.GetLocation().Z);
-
-			int32 RetValueRX = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(3)->AddCubicKey(FrameNum, transform.GetRotation().Euler().X);
-			int32 RetValueRY = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(4)->AddCubicKey(FrameNum, transform.GetRotation().Euler().Y);
-			int32 RetValueRZ = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(5)->AddCubicKey(FrameNum, transform.GetRotation().Euler().Z);
-
-			int32 RetValueSX = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(6)->AddCubicKey(FrameNum, transform.GetScale3D().X);
-			int32 RetValueSY = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(7)->AddCubicKey(FrameNum, transform.GetScale3D().Y);
-			int32 RetValueSZ = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(8)->AddCubicKey(FrameNum, transform.GetScale3D().Z);
-
-			return Py_BuildValue("((III)(III)(III))", RetValueTX, RetValueTY, RetValueTZ, RetValueRX, RetValueRY, RetValueRZ, RetValueSX, RetValueSY, RetValueSZ);
-#endif
 			Py_RETURN_NONE;
+#else
+			int RetValueTX, RetValueTY, RetValueTZ = -1;
+			int RetValueRX, RetValueRY, RetValueRZ = -1;
+			int RetValueSX, RetValueSY, RetValueSZ = -1;
+			FMovieSceneFloatChannel *ChannelTX = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(0);
+			FMovieSceneFloatChannel *ChannelTY = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(1);
+			FMovieSceneFloatChannel *ChannelTZ = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(2);
+			FMovieSceneFloatChannel *ChannelRX = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(3);
+			FMovieSceneFloatChannel *ChannelRY = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(4);
+			FMovieSceneFloatChannel *ChannelRZ = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(5);
+			FMovieSceneFloatChannel *ChannelSX = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(6);
+			FMovieSceneFloatChannel *ChannelSY = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(7);
+			FMovieSceneFloatChannel *ChannelSZ = section_transform->GetChannelProxy().GetChannel<FMovieSceneFloatChannel>(8);
+
+			switch (InterpolationMode)
+			{
+			case(EMovieSceneKeyInterpolation::Auto):
+				RetValueTX = ChannelTX->AddCubicKey(FrameNumber, transform.GetTranslation().X, RCTM_Auto);
+				RetValueTY = ChannelTY->AddCubicKey(FrameNumber, transform.GetTranslation().Y, RCTM_Auto);
+				RetValueTZ = ChannelTZ->AddCubicKey(FrameNumber, transform.GetTranslation().Z, RCTM_Auto);
+				RetValueRX = ChannelRX->AddCubicKey(FrameNumber, transform.GetRotation().Euler().X, RCTM_Auto);
+				RetValueRY = ChannelRY->AddCubicKey(FrameNumber, transform.GetRotation().Euler().Y, RCTM_Auto);
+				RetValueRZ = ChannelRZ->AddCubicKey(FrameNumber, transform.GetRotation().Euler().Z, RCTM_Auto);
+				RetValueSX = ChannelSX->AddCubicKey(FrameNumber, transform.GetScale3D().X, RCTM_Auto);
+				RetValueSY = ChannelSY->AddCubicKey(FrameNumber, transform.GetScale3D().Y, RCTM_Auto);
+				RetValueSZ = ChannelSZ->AddCubicKey(FrameNumber, transform.GetScale3D().Z, RCTM_Auto);
+				break;
+			case(EMovieSceneKeyInterpolation::User):
+				RetValueTX = ChannelTX->AddCubicKey(FrameNumber, transform.GetTranslation().X, RCTM_User);
+				RetValueTY = ChannelTY->AddCubicKey(FrameNumber, transform.GetTranslation().Y, RCTM_User);
+				RetValueTZ = ChannelTZ->AddCubicKey(FrameNumber, transform.GetTranslation().Z, RCTM_User);
+				RetValueRX = ChannelRX->AddCubicKey(FrameNumber, transform.GetRotation().Euler().X, RCTM_User);
+				RetValueRY = ChannelRY->AddCubicKey(FrameNumber, transform.GetRotation().Euler().Y, RCTM_User);
+				RetValueRZ = ChannelRZ->AddCubicKey(FrameNumber, transform.GetRotation().Euler().Z, RCTM_User);
+				RetValueSX = ChannelSX->AddCubicKey(FrameNumber, transform.GetScale3D().X, RCTM_User);
+				RetValueSY = ChannelSY->AddCubicKey(FrameNumber, transform.GetScale3D().Y, RCTM_User);
+				RetValueSZ = ChannelSZ->AddCubicKey(FrameNumber, transform.GetScale3D().Z, RCTM_User);
+			case(EMovieSceneKeyInterpolation::Break):
+				RetValueTX = ChannelTX->AddCubicKey(FrameNumber, transform.GetTranslation().X, RCTM_Break);
+				RetValueTY = ChannelTY->AddCubicKey(FrameNumber, transform.GetTranslation().Y, RCTM_Break);
+				RetValueTZ = ChannelTZ->AddCubicKey(FrameNumber, transform.GetTranslation().Z, RCTM_Break);
+				RetValueRX = ChannelRX->AddCubicKey(FrameNumber, transform.GetRotation().Euler().X, RCTM_Break);
+				RetValueRY = ChannelRY->AddCubicKey(FrameNumber, transform.GetRotation().Euler().Y, RCTM_Break);
+				RetValueRZ = ChannelRZ->AddCubicKey(FrameNumber, transform.GetRotation().Euler().Z, RCTM_Break);
+				RetValueSX = ChannelSX->AddCubicKey(FrameNumber, transform.GetScale3D().X, RCTM_Break);
+				RetValueSY = ChannelSY->AddCubicKey(FrameNumber, transform.GetScale3D().Y, RCTM_Break);
+				RetValueSZ = ChannelSZ->AddCubicKey(FrameNumber, transform.GetScale3D().Z, RCTM_Break);
+				break;
+			case(EMovieSceneKeyInterpolation::Linear):
+				RetValueTX = ChannelTX->AddLinearKey(FrameNumber, transform.GetTranslation().X);
+				RetValueTY = ChannelTY->AddLinearKey(FrameNumber, transform.GetTranslation().Y);
+				RetValueTZ = ChannelTZ->AddLinearKey(FrameNumber, transform.GetTranslation().Z);
+				RetValueRX = ChannelRX->AddLinearKey(FrameNumber, transform.GetRotation().Euler().X);
+				RetValueRY = ChannelRY->AddLinearKey(FrameNumber, transform.GetRotation().Euler().Y);
+				RetValueRZ = ChannelRZ->AddLinearKey(FrameNumber, transform.GetRotation().Euler().Z);
+				RetValueSX = ChannelSX->AddLinearKey(FrameNumber, transform.GetScale3D().X);
+				RetValueSY = ChannelSY->AddLinearKey(FrameNumber, transform.GetScale3D().Y);
+				RetValueSZ = ChannelSZ->AddLinearKey(FrameNumber, transform.GetScale3D().Z);
+				break;
+			case(EMovieSceneKeyInterpolation::Constant):
+				RetValueTX = ChannelTX->AddConstantKey(FrameNumber, transform.GetTranslation().X);
+				RetValueTY = ChannelTY->AddConstantKey(FrameNumber, transform.GetTranslation().Y);
+				RetValueTZ = ChannelTZ->AddConstantKey(FrameNumber, transform.GetTranslation().Z);
+				RetValueRX = ChannelRX->AddConstantKey(FrameNumber, transform.GetRotation().Euler().X);
+				RetValueRY = ChannelRY->AddConstantKey(FrameNumber, transform.GetRotation().Euler().Y);
+				RetValueRZ = ChannelRZ->AddConstantKey(FrameNumber, transform.GetRotation().Euler().Z);
+				RetValueSX = ChannelSX->AddConstantKey(FrameNumber, transform.GetScale3D().X);
+				RetValueSY = ChannelSY->AddConstantKey(FrameNumber, transform.GetScale3D().Y);
+				RetValueSZ = ChannelSZ->AddConstantKey(FrameNumber, transform.GetScale3D().Z);
+				break;
+			default:
+				return PyErr_Format(PyExc_Exception, "unsupported interpolation");
+			}
+			return Py_BuildValue("((iii)(iii)(iii))", RetValueTX, RetValueTY, RetValueTZ, RetValueRX, RetValueRY, RetValueRZ, RetValueSX, RetValueSY, RetValueSZ);
+#endif
 		}
 	}
 
@@ -919,14 +1109,42 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 			section_vector->AddKey(time, vy, (EMovieSceneKeyInterpolation)interpolation);
 			section_vector->AddKey(time, vz, (EMovieSceneKeyInterpolation)interpolation);
 #else
-			FFrameNumber FrameNum((int32)frame_number);
-			FMovieSceneFloatChannel &Channel = (FMovieSceneFloatChannel &)section_vector->GetChannel(0);
-			int32 RetValueX = Channel.AddCubicKey(FrameNum, vec.X);
-			Channel = (FMovieSceneFloatChannel &)section_vector->GetChannel(1);
-			int32 RetValueY = Channel.AddCubicKey(FrameNum, vec.Y);
-			Channel = (FMovieSceneFloatChannel &)section_vector->GetChannel(2);
-			int32 RetValueZ = Channel.AddCubicKey(FrameNum, vec.Z);
-			return Py_BuildValue("(fff)", RetValueX, RetValueY, RetValueZ);
+			int RetValueVX, RetValueVY, RetValueVZ = -1;
+
+			FMovieSceneFloatChannel& ChannelX = (FMovieSceneFloatChannel&)section_vector->GetChannel(0);
+			FMovieSceneFloatChannel& ChannelY = (FMovieSceneFloatChannel&)section_vector->GetChannel(1);
+			FMovieSceneFloatChannel& ChannelZ = (FMovieSceneFloatChannel&)section_vector->GetChannel(2);
+
+			switch (InterpolationMode)
+			{
+			case(EMovieSceneKeyInterpolation::Auto):
+				RetValueVX = ChannelX.AddCubicKey(FrameNumber, vec.X, RCTM_Auto);
+				RetValueVY = ChannelY.AddCubicKey(FrameNumber, vec.Y, RCTM_Auto);
+				RetValueVZ = ChannelZ.AddCubicKey(FrameNumber, vec.Z, RCTM_Auto);
+				break;
+			case(EMovieSceneKeyInterpolation::User):
+				RetValueVX = ChannelX.AddCubicKey(FrameNumber, vec.X, RCTM_User);
+				RetValueVY = ChannelY.AddCubicKey(FrameNumber, vec.Y, RCTM_User);
+				RetValueVZ = ChannelZ.AddCubicKey(FrameNumber, vec.Z, RCTM_User);
+			case(EMovieSceneKeyInterpolation::Break):
+				RetValueVX = ChannelX.AddCubicKey(FrameNumber, vec.X, RCTM_Break);
+				RetValueVY = ChannelY.AddCubicKey(FrameNumber, vec.Y, RCTM_Break);
+				RetValueVZ = ChannelZ.AddCubicKey(FrameNumber, vec.Z, RCTM_Break);
+				break;
+			case(EMovieSceneKeyInterpolation::Linear):
+				RetValueVX = ChannelX.AddLinearKey(FrameNumber, vec.X);
+				RetValueVY = ChannelY.AddLinearKey(FrameNumber, vec.Y);
+				RetValueVZ = ChannelZ.AddLinearKey(FrameNumber, vec.Z);
+				break;
+			case(EMovieSceneKeyInterpolation::Constant):
+				RetValueVX = ChannelX.AddConstantKey(FrameNumber, vec.X);
+				RetValueVY = ChannelY.AddConstantKey(FrameNumber, vec.Y);
+				RetValueVZ = ChannelZ.AddConstantKey(FrameNumber, vec.Z);
+				break;
+			default:
+				return PyErr_Format(PyExc_Exception, "unsupported interpolation");
+			}
+			return Py_BuildValue("(iii)", RetValueVX, RetValueVY, RetValueVZ);
 #endif
 
 			Py_RETURN_NONE;
@@ -1238,8 +1456,8 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 	ue_py_check(self);
 
 #if ENGINE_MINOR_VERSION >= 20
-	return PyErr_Format(PyExc_Exception, "sequencer_import_fbx_transform still not supported on 4.20");
-#endif
+	return PyErr_Format(PyExc_Exception, "sequencer_import_fbx_transform() is still not supported in this engine version");
+#else
 
 	char *filename;
 	char *nodename;
@@ -1299,6 +1517,7 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 #if ENGINE_MINOR_VERSION >= 18
 		CurveAPI.GetConvertedTransformCurveData(NodeName, Translation[0], Translation[1], Translation[2], EulerRotation[0], EulerRotation[1], EulerRotation[2], Scale[0], Scale[1], Scale[2], DefaultTransform);
 
+
 		for (int32 ChannelIndex = 0; ChannelIndex < 3; ++ChannelIndex)
 		{
 			EAxis::Type ChannelAxis = EAxis::X;
@@ -1310,14 +1529,13 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 			{
 				ChannelAxis = EAxis::Z;
 			}
-#if ENGINE_MINOR_VERSION < 20
+
 			section->GetTranslationCurve(ChannelAxis).SetDefaultValue(DefaultTransform.GetLocation()[ChannelIndex]);
 			section->GetRotationCurve(ChannelAxis).SetDefaultValue(DefaultTransform.GetRotation().Euler()[ChannelIndex]);
 			section->GetScaleCurve(ChannelAxis).SetDefaultValue(DefaultTransform.GetScale3D()[ChannelIndex]);
-#else
-			// TODO ??
-#endif
 		}
+
+
 #else
 		CurveAPI.GetConvertedTransformCurveData(NodeName, Translation[0], Translation[1], Translation[2], EulerRotation[0], EulerRotation[1], EulerRotation[2], Scale[0], Scale[1], Scale[2]);
 
@@ -1348,11 +1566,7 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 				if (CurveIndex == 0)
 				{
 					CurveFloat = &Translation[ChannelIndex];
-#if ENGINE_MINOR_VERSION < 20
 					ChannelCurve = &section->GetTranslationCurve(ChannelAxis);
-#else
-					// TODO ???
-#endif
 					if (ChannelIndex == 1)
 					{
 						bNegative = true;
@@ -1361,11 +1575,7 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 				else if (CurveIndex == 1)
 				{
 					CurveFloat = &EulerRotation[ChannelIndex];
-#if ENGINE_MINOR_VERSION < 20
 					ChannelCurve = &section->GetRotationCurve(ChannelAxis);
-#else
-					// TODO ???
-#endif
 					if (ChannelIndex == 1 || ChannelIndex == 2)
 					{
 						bNegative = true;
@@ -1374,11 +1584,7 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 				else if (CurveIndex == 2)
 				{
 					CurveFloat = &Scale[ChannelIndex];
-#if ENGINE_MINOR_VERSION < 20
 					ChannelCurve = &section->GetScaleCurve(ChannelAxis);
-#else
-					// TODO ???
-#endif
 				}
 
 				if (ChannelCurve != nullptr && CurveFloat != nullptr)
@@ -1408,11 +1614,8 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 							LeaveTangent = -LeaveTangent;
 						}
 
-#if ENGINE_MINOR_VERSION < 20
 						FMatineeImportTools::SetOrAddKey(*ChannelCurve, CurveFloat->Points[KeyIndex].InVal, CurveFloat->Points[KeyIndex].OutVal, ArriveTangent, LeaveTangent, CurveFloat->Points[KeyIndex].InterpMode);
-#else
-						// TODO ???
-#endif
+
 					}
 
 					ChannelCurve->RemoveRedundantKeys(KINDA_SMALL_NUMBER);
@@ -1421,20 +1624,15 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 			}
 		}
 
-#if ENGINE_MINOR_VERSION < 20
+
 		section->SetStartTime(MinTime);
 		section->SetEndTime(MaxTime);
-#else
-		// TODO
-		const TRange<FFrameNumber> Range;
-		//Range.SetLowerBoundValue();
-		section->SetRange(Range);
-#endif
+
 
 		FbxImporter->ReleaseScene();
 		ImportOptions->bConvertScene = bConverteScene;
-		ImportOptions->bConvertSceneUnit = bConverteScene;
-		ImportOptions->bForceFrontXAxis = bConverteScene;
+		ImportOptions->bConvertSceneUnit = bConverteSceneUnit;
+		ImportOptions->bForceFrontXAxis = bForceFrontXAxis;
 		Py_RETURN_NONE;
 	}
 
@@ -1443,6 +1641,7 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 	ImportOptions->bConvertSceneUnit = bConverteSceneUnit;
 	ImportOptions->bForceFrontXAxis = bForceFrontXAxis;
 	return PyErr_Format(PyExc_Exception, "unable to find specified node in Fbx file");
+#endif
 }
 #endif
 

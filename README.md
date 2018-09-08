@@ -165,9 +165,14 @@ Just remove the .so files in Plugins/UnrealEnginePython/Binaries/Linux and pull 
 
 At the next run the build procedure wil be started again.
 
+Android Deployment
+------------------
+
+Check https://github.com/20tab/UnrealEnginePython/blob/master/docs/Android.md
+
 # Installation on other platforms
 
-Currently only Windows, MacOSX and Linux are supported. We are investigating Android support too via the kivy project.
+Currently only Windows, MacOSX, Linux and Android are supported.
 
 # Using Python with Unreal Engine (finally)
 
@@ -473,8 +478,6 @@ if is_hitting_something:
     ue.log(hit_result)
 ```
 
-Remember that structs are passed by value (not by ref like UObject's), so a dedicated unreal_engine.UScriptStruct python class is exposed.
-
 To create a new struct instance you can do:
 
 ```python
@@ -495,29 +498,6 @@ To access the fields of a struct just call the fields() method.
 
 A good example of struct usage is available here: https://github.com/20tab/UnrealEnginePython/blob/master/docs/Settings.md
 
-As structs are passed by value, you need to pay attention when manipulating structs fields that are structs by themselves:
-
-```python
-from unreal_engine.structs import TerrificStruct, DumbStruct
-
-ts = TerrificStruct()
-ts.dumb = DumbStruct(Foo=17, Bar=22)
-
-# will not modify the original DumbStruct but a copy of it !!!
-ts.dumb.Foo = 22
-```
-
-You can eventually force structs to be passed by ref (extremely dangerous as the internal C pointer could be a dangling one) using the ref() function:
-
-```python
-from unreal_engine.structs import TerrificStruct, DumbStruct
-
-ts = TerrificStruct()
-ts.dumb = DumbStruct(Foo=17, Bar=22)
-
-# ref() will return a pointer to a struct
-ts.ref().dumb.foo().Foo = 22
-```
 
 More details here: https://github.com/20tab/UnrealEnginePython/blob/master/docs/MemoryManagement.md
 
@@ -954,3 +934,4 @@ Such a big project requires constant sponsorship, special thanks go to:
 
 * GoodTH.INC https://www.goodthinc.com/ (they are sponsoring the sequencer api)
 
+* Quixel AB https://megascans.se/ (built their integration tool over UnrealEnginePython giving us tons of useful feedbacks and ideas)

@@ -176,9 +176,9 @@ static PyObject *py_unreal_engine_exec(PyObject * self, PyObject * args)
 		return NULL;
 	}
 	FUnrealEnginePythonModule &PythonModule = FModuleManager::GetModuleChecked<FUnrealEnginePythonModule>("UnrealEnginePython");
-	UEPyGlobalState = PyEval_SaveThread();
+	Py_BEGIN_ALLOW_THREADS;
 	PythonModule.RunFile(filename);
-	PyEval_RestoreThread(UEPyGlobalState);
+	Py_END_ALLOW_THREADS;
 	Py_RETURN_NONE;
 }
 
@@ -1091,6 +1091,13 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "static_mesh_set_shadow_for_lod", (PyCFunction)py_ue_static_mesh_set_shadow_for_lod, METH_VARARGS, "" },
 	{ "get_raw_mesh", (PyCFunction)py_ue_static_mesh_get_raw_mesh, METH_VARARGS, "" },
 	{ "get_num_triangles", (PyCFunction)py_ue_static_mesh_get_num_triangles, METH_VARARGS, "" },
+
+	{ "static_mesh_generate_kdop10x", (PyCFunction)py_ue_static_mesh_generate_kdop10x, METH_VARARGS, "" },
+	{ "static_mesh_generate_kdop10y", (PyCFunction)py_ue_static_mesh_generate_kdop10y, METH_VARARGS, "" },
+	{ "static_mesh_generate_kdop10z", (PyCFunction)py_ue_static_mesh_generate_kdop10z, METH_VARARGS, "" },
+	{ "static_mesh_generate_kdop18", (PyCFunction)py_ue_static_mesh_generate_kdop18, METH_VARARGS, "" },
+	{ "static_mesh_generate_kdop26", (PyCFunction)py_ue_static_mesh_generate_kdop26, METH_VARARGS, "" },
+
 #endif
 
 	// Viewport

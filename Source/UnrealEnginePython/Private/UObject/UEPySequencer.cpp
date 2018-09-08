@@ -13,7 +13,9 @@
 #include "Editor/UnrealEd/Public/Toolkits/AssetEditorManager.h"
 #include "Private/LevelSequenceEditorToolkit.h"
 #include "Tracks/MovieSceneCameraCutTrack.h"
+#if ENGINE_MINOR_VERSION < 20
 #include "Sections/IKeyframeSection.h"
+#endif
 #include "Sections/MovieSceneFloatSection.h"
 #include "Sections/MovieSceneBoolSection.h"
 #include "Sections/MovieScene3DTransformSection.h"
@@ -21,6 +23,7 @@
 #include "Runtime/MovieScene/Public/MovieSceneFolder.h"
 #include "Runtime/MovieScene/Public/MovieSceneSpawnable.h"
 #include "Private/SequencerSelection.h"
+#include "Runtime/MovieScene/Public/MovieScenePossessable.h"
 #if ENGINE_MINOR_VERSION < 18
 #include "Editor/UnrealEd/Private/FbxImporter.h"
 #else
@@ -185,7 +188,7 @@ PyObject *py_ue_sequencer_find_possessable(ue_PyUObject *self, PyObject * args)
 		return PyErr_Format(PyExc_Exception, "unable to find uobject with GUID \"%s\"", guid);
 
 	Py_RETURN_UOBJECT(u_obj);
-	}
+}
 
 PyObject *py_ue_sequencer_find_spawnable(ue_PyUObject *self, PyObject * args)
 {
@@ -340,7 +343,7 @@ PyObject *py_ue_sequencer_add_actor(ue_PyUObject *self, PyObject * args)
 	}
 
 	return PyUnicode_FromString(TCHAR_TO_UTF8(*new_guid.ToString()));
-	}
+}
 
 PyObject *py_ue_sequencer_add_actor_component(ue_PyUObject *self, PyObject * args)
 {
@@ -799,7 +802,6 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 		{
 			bool unwind = (py_unwind && PyObject_IsTrue(py_unwind));
 			FTransform transform = py_ue_ftransform_get(py_transform);
-
 
 			FTransformKey tx = FTransformKey(EKey3DTransformChannel::Translation, EAxis::X, transform.GetLocation().X, unwind);
 			FTransformKey ty = FTransformKey(EKey3DTransformChannel::Translation, EAxis::Y, transform.GetLocation().Y, unwind);

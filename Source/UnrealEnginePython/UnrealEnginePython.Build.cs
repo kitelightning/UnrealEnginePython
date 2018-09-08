@@ -276,14 +276,7 @@ public class UnrealEnginePython : ModuleRules
                 PublicIncludePaths.Add(items[0]);
                 PublicAdditionalLibraries.Add(items[1]);
             }
-            PublicDefinitions.Add(string.Format("UNREAL_ENGINE_PYTHON_ON_LINUX"));
-        }
-
-        string enableThreads = System.Environment.GetEnvironmentVariable("UEP_ENABLE_THREADS");
-        if (!string.IsNullOrEmpty(enableThreads))
-        {
-            PublicDefinitions.Add("UEPY_THREADING");
-            System.Console.WriteLine("*** Enabled Python Threads support ***");
+            Definitions.Add(string.Format("UNREAL_ENGINE_PYTHON_ON_LINUX"));
         }
 
     }

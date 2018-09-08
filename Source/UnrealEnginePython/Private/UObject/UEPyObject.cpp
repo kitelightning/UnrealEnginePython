@@ -794,9 +794,9 @@ PyObject *py_ue_save_config(ue_PyUObject *self, PyObject * args, PyObject *kwarg
 		Py_RETURN_NONE;
 	}
 
-    Py_BEGIN_ALLOW_THREADS;
+	Py_BEGIN_ALLOW_THREADS;
 	self->ue_object->SaveConfig(flags, UTF8_TO_TCHAR(file_name));
-    Py_END_ALLOW_THREADS;
+	Py_END_ALLOW_THREADS;
 
 	Py_RETURN_NONE;
 }
@@ -1533,8 +1533,11 @@ PyObject *py_ue_set_property_flags(ue_PyUObject *self, PyObject * args)
 	if (!u_property)
 		return PyErr_Format(PyExc_Exception, "unable to find property %s", property_name);
 
-
+#if ENGINE_MINOR_VERSION < 20
 	u_property->SetPropertyFlags(flags);
+#else
+	u_property->SetPropertyFlags((EPropertyFlags)flags);
+#endif
 	Py_RETURN_NONE;
 }
 
@@ -1566,7 +1569,11 @@ PyObject *py_ue_add_property_flags(ue_PyUObject *self, PyObject * args)
 		return PyErr_Format(PyExc_Exception, "unable to find property %s", property_name);
 
 
+#if ENGINE_MINOR_VERSION < 20
 	u_property->SetPropertyFlags(u_property->GetPropertyFlags() | flags);
+#else
+	u_property->SetPropertyFlags(u_property->GetPropertyFlags() | (EPropertyFlags)flags);
+#endif
 	Py_RETURN_NONE;
 }
 
@@ -2368,7 +2375,11 @@ PyObject *py_ue_add_property(ue_PyUObject * self, PyObject * args)
 	{
 		UArrayProperty *u_array = (UArrayProperty *)scope;
 		u_array->AddCppProperty(u_property);
+#if ENGINE_MINOR_VERSION < 20
 		u_property->SetPropertyFlags(flags);
+#else
+		u_property->SetPropertyFlags((EPropertyFlags)flags);
+#endif
 		if (u_property->GetClass() == UObjectProperty::StaticClass())
 		{
 			UObjectProperty *obj_prop = (UObjectProperty *)u_property;
@@ -2400,9 +2411,13 @@ PyObject *py_ue_add_property(ue_PyUObject * self, PyObject * args)
 		}
 		UMapProperty *u_map = (UMapProperty *)scope;
 
-
+#if ENGINE_MINOR_VERSION < 20
 		u_property->SetPropertyFlags(flags);
 		u_property2->SetPropertyFlags(flags);
+#else
+		u_property->SetPropertyFlags((EPropertyFlags)flags);
+		u_property2->SetPropertyFlags((EPropertyFlags)flags);
+#endif
 
 		if (u_property->GetClass() == UObjectProperty::StaticClass())
 		{
@@ -2505,7 +2520,11 @@ PyObject *py_ue_add_property(ue_PyUObject * self, PyObject * args)
 		}
 	}
 
+#if ENGINE_MINOR_VERSION < 20
 	u_property->SetPropertyFlags(flags);
+#else
+	u_property->SetPropertyFlags((EPropertyFlags)flags);
+#endif
 	u_property->ArrayDim = 1;
 
 	UStruct *u_struct = (UStruct *)self->ue_object;

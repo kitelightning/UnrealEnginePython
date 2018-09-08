@@ -31,32 +31,58 @@ static PyObject *py_ue_fmenu_builder_add_menu_entry(ue_PyFMenuBuilder *self, PyO
 {
 	char *label;
 	char *tooltip;
-	PyObject *py_callable;
+	PyObject *py_callableExecAction = nullptr;
+    PyObject *py_callableIsActnChecked = nullptr;
 	PyObject *py_obj = nullptr;
 	int ui_action_type = EUserInterfaceActionType::Button;
-	if (!PyArg_ParseTuple(args, "ssO|Oi:add_menu_entry", &label, &tooltip, &py_callable, &py_obj, &ui_action_type))
+	if (!PyArg_ParseTuple(args, "ssO|OiO:add_menu_entry", &label, &tooltip, &py_callableExecAction, &py_obj, &ui_action_type, &py_callableIsActnChecked))
 		return nullptr;
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCalllable_Check_Extended(py_callableExecAction))
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 	}
 
+    if (py_callableIsActnChecked && !PyCalllable_Check_Extended(py_callableIsActnChecked))
+    {
+        return PyErr_Format(PyExc_Exception, "IsActnChecked argument is not callable");
+    }
 
-	FExecuteAction handler;
-	TSharedRef<FPythonSlateDelegate> py_delegate = FUnrealEnginePythonHouseKeeper::Get()->NewStaticSlateDelegate(py_callable);
 
-	if (py_obj)
+	FExecuteAction execActionHandler;
+	TSharedRef<FPythonSlateDelegate> py_delegateExecAction = FUnrealEnginePythonHouseKeeper::Get()->NewStaticSlateDelegate(py_callableExecAction);
+
+	if (py_obj && py_obj != Py_None)
 	{
 		Py_INCREF(py_obj);
-		handler.BindSP(py_delegate, &FPythonSlateDelegate::ExecuteAction, py_obj);
+		execActionHandler.BindSP(py_delegateExecAction, &FPythonSlateDelegate::ExecuteAction, py_obj);
 	}
 	else
 	{
-		handler.BindSP(py_delegate, &FPythonSlateDelegate::SimpleExecuteAction);
+		execActionHandler.BindSP(py_delegateExecAction, &FPythonSlateDelegate::SimpleExecuteAction);
 	}
 
-	self->menu_builder.AddMenuEntry(FText::FromString(UTF8_TO_TCHAR(label)), FText::FromString(UTF8_TO_TCHAR(tooltip)), FSlateIcon(), FUIAction(handler), NAME_None,
+    FCanExecuteAction canExecActnHandler = FCanExecuteAction::CreateRaw(&FSlateApplication::Get(), &FSlateApplication::IsNormalExecution);
+
+    FIsActionChecked isActnChkdHandler;
+    if (py_callableIsActnChecked)
+    {
+        if (!PyCalllable_Check_Extended(py_callableIsActnChecked))
+        {
+            return PyErr_Format(PyExc_Exception, "IsActnChecked argument is not callable");
+        }
+        TSharedRef<FPythonSlateDelegate> py_delegateIsActnChecked = FUnrealEnginePythonHouseKeeper::Get()->NewStaticSlateDelegate(py_callableIsActnChecked);
+        isActnChkdHandler.BindSP(py_delegateIsActnChecked, &FPythonSlateDelegate::GetterBool);
+    }
+
+    FUIAction action_MenuEntry
+    (
+        execActionHandler,
+        canExecActnHandler,
+        isActnChkdHandler
+    );
+
+	self->menu_builder.AddMenuEntry(FText::FromString(UTF8_TO_TCHAR(label)), FText::FromString(UTF8_TO_TCHAR(tooltip)), FSlateIcon(), action_MenuEntry, NAME_None,
 		(EUserInterfaceActionType::Type)ui_action_type);
 
 	Py_RETURN_NONE;

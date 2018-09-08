@@ -1850,7 +1850,7 @@ PyObject *py_ue_broadcast(ue_PyUObject *self, PyObject *args)
 #if ENGINE_MINOR_VERSION >= 17
 						prop->ImportText(*default_key_value, prop->ContainerPtrToValuePtr<uint8>(parms), PPF_None, NULL);
 #else
-						prop->ImportText(*default_key_value, prop->ContainerPtrToValuePtr<uint8>(buffer), PPF_Localized, NULL);
+						prop->ImportText(*default_key_value, prop->ContainerPtrToValuePtr<uint8>(parms), PPF_Localized, NULL);
 #endif
 					}
 #endif
@@ -2775,14 +2775,45 @@ PyObject *py_ue_get_cdo(ue_PyUObject * self, PyObject * args)
 
 	ue_py_check(self);
 
-	if (!self->ue_object->IsA<UClass>())
+	UClass *u_class = ue_py_check_type<UClass>(self);
+	if (!u_class)
 	{
 		return PyErr_Format(PyExc_Exception, "uobject is not a UClass");
 	}
 
-	UClass *u_class = (UClass *)self->ue_object;
-
 	Py_RETURN_UOBJECT(u_class->GetDefaultObject());
+}
+
+PyObject *py_ue_get_archetype(ue_PyUObject * self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	UObject *Archetype = self->ue_object->GetArchetype();
+
+	if (!Archetype)
+		return PyErr_Format(PyExc_Exception, "uobject has no archetype");
+
+	Py_RETURN_UOBJECT(Archetype);
+}
+
+PyObject *py_ue_get_archetype_instances(ue_PyUObject * self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	TArray<UObject *> Instances;
+
+	self->ue_object->GetArchetypeInstances(Instances);
+
+	PyObject *py_list = PyList_New(0);
+
+	for (UObject *Instance : Instances)
+	{
+		PyList_Append(py_list, (PyObject *)ue_get_python_uobject(Instance));
+	}
+
+	return py_list;
 }
 
 PyObject *py_ue_get_archetype(ue_PyUObject * self, PyObject * args)
@@ -2871,7 +2902,7 @@ PyObject *py_ue_save_package(ue_PyUObject * self, PyObject * args)
 		package = CreatePackage(nullptr, UTF8_TO_TCHAR(name));
 		if (!package)
 			return PyErr_Format(PyExc_Exception, "unable to create package");
-		
+
 		package->FileName = *FPackageName::LongPackageNameToFilename(UTF8_TO_TCHAR(name), bIsMap ? FPackageName::GetMapPackageExtension() : FPackageName::GetAssetPackageExtension());
 		if (has_package)
 		{

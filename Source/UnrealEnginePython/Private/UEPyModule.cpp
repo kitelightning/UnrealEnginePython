@@ -720,6 +720,10 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "auto_root", (PyCFunction)py_ue_auto_root, METH_VARARGS, "" },
 	{ "remove_from_root", (PyCFunction)py_ue_remove_from_root, METH_VARARGS, "" },
 
+	{ "own", (PyCFunction)py_ue_own, METH_VARARGS, "" },
+	{ "disown", (PyCFunction)py_ue_disown, METH_VARARGS, "" },
+	{ "is_owned", (PyCFunction)py_ue_is_owned, METH_VARARGS, "" },
+
 	{ "find_function", (PyCFunction)py_ue_find_function, METH_VARARGS, "" },
 
 #pragma warning(suppress: 4191)
@@ -1201,6 +1205,11 @@ static void ue_pyobject_dealloc(ue_PyUObject *self)
 #if defined(UEPY_MEMORY_DEBUG)
 	UE_LOG(LogPython, Warning, TEXT("Destroying ue_PyUObject %p mapped to UObject %p"), self, self->ue_object);
 #endif
+	if (self->owned)
+	{
+		FUnrealEnginePythonHouseKeeper::Get()->UntrackUObject(self->ue_object);
+	}
+
 	if (self->auto_rooted && (self->ue_object && self->ue_object->IsValidLowLevel() && self->ue_object->IsRooted()))
 	{
 		self->ue_object->RemoveFromRoot();
@@ -1398,8 +1407,19 @@ static PyObject *ue_PyUObject_call(ue_PyUObject *self, PyObject *args, PyObject 
 			PyTuple_SetItem(py_args, 2, py_name);
             PyTuple_SetItem(py_args, 3, PyLong_FromLongLong(flags));
 		}
-		PyObject *ret = py_unreal_engine_new_object(nullptr, py_args);
-		Py_DECREF(py_args);
+		ue_PyUObject *ret = (ue_PyUObject *)py_unreal_engine_new_object(nullptr, py_args);
+		if (!ret)
+		{
+			Py_DECREF(py_args);
+			return NULL;
+		}
+		// when new_object is called the reference counting is 2
+		Py_DECREF(ret);
+		ret->owned = 1;
+
+		// UObject crated explicitely from python, will be managed by python...
+		FUnrealEnginePythonHouseKeeper::Get()->TrackUObject(ret->ue_object);
+
 		return (PyObject *)ret;
 	}
 	// if it is a uscriptstruct, instantiate a new struct
@@ -1839,6 +1859,7 @@ ue_PyUObject *ue_get_python_uobject(UObject *ue_obj)
 		ue_py_object->py_proxy = nullptr;
 		ue_py_object->auto_rooted = 0;
 		ue_py_object->py_dict = PyDict_New();
+		ue_py_object->owned = 0;
 
 		FUnrealEnginePythonHouseKeeper::Get()->RegisterPyUObject(ue_obj, ue_py_object);
 
@@ -2771,7 +2792,7 @@ void ue_bind_events_for_py_class_by_attribute(UObject *u_obj, PyObject *py_class
 			PyObject *event_signature = PyObject_GetAttrString(item, (char*)"ue_event");
 			if (event_signature)
 			{
-				if (PyUnicode_Check(event_signature))
+				if (PyUnicodeOrString_Check(event_signature))
 				{
 					FString event_name = FString(UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(event_signature)));
 					TArray<FString> parts;

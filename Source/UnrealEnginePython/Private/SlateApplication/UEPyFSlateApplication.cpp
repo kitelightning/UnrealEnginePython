@@ -8,6 +8,7 @@
 #include "Slate/UEPySWindow.h"
 #include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
 #include "Runtime/SlateRHIRenderer/Public/Interfaces/ISlateRHIRendererModule.h"
+#include "Slate/UEPySWindow.h"
 
 static PyObject *py_ue_get_average_delta_time(PyObject *cls, PyObject * args)
 {
@@ -241,6 +242,17 @@ static PyObject *py_ue_create(PyObject *cls, PyObject * args)
 	Py_RETURN_NONE;
 }
 
+
+static PyObject *py_ue_get_active_top_level_window(PyObject *cls, PyObject * args)
+{
+
+	TSharedPtr<SWindow> Window = FSlateApplication::Get().GetActiveTopLevelWindow();
+	if (!Window.IsValid())
+		return PyErr_Format(PyExc_Exception, "no active TopLevel Window found");
+
+	return (PyObject *)py_ue_new_swindow(Window.ToSharedRef());
+}
+
 static PyMethodDef ue_PyFSlateApplication_methods[] = {
 	{ "create", (PyCFunction)py_ue_create, METH_VARARGS | METH_CLASS, "" },
 	{ "get_average_delta_time", (PyCFunction)py_ue_get_average_delta_time, METH_VARARGS | METH_CLASS, "" },
@@ -258,6 +270,7 @@ static PyMethodDef ue_PyFSlateApplication_methods[] = {
 	{ "push_menu", (PyCFunction)py_ue_push_menu, METH_VARARGS | METH_CLASS, "" },
     { "add_window", (PyCFunction)py_ue_add_window, METH_VARARGS | METH_CLASS, "" },
     { "destroy_window_immediately", (PyCFunction)py_ue_destroy_window_immediately, METH_VARARGS | METH_CLASS, "" },
+	{ "get_active_top_level_window", (PyCFunction)py_ue_get_active_top_level_window, METH_VARARGS | METH_CLASS, "" },
 	{ NULL }  /* Sentinel */
 };
 

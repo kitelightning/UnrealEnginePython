@@ -39,6 +39,9 @@
 #include "Wrappers/UEPyFAssetData.h"
 #include "Wrappers/UEPyFEditorViewportClient.h"
 #include "Wrappers/UEPyIAssetEditorInstance.h"
+#include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
+
+#include "Runtime/Core/Public/HAL/ThreadHeartBeat.h"
 
 #include "UEPyIPlugin.h"
 
@@ -673,6 +676,7 @@ PyObject *py_unreal_engine_get_asset(PyObject * self, PyObject * args)
 	Py_RETURN_UOBJECT(asset.GetAsset());
 }
 
+
 PyObject *py_unreal_engine_get_all_assets(PyObject * self, PyObject * args)
 {
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
@@ -708,6 +712,36 @@ PyObject * py_unreal_engine_get_asset_by_object_path(PyObject * self, PyObject *
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
 
 	return py_ue_new_fassetdata(AssetRegistry.GetAssetByObjectPath(FName(object_path)));
+}
+
+
+PyObject *py_unreal_engine_is_loading_assets(PyObject * self, PyObject * args)
+{
+	if (!GEditor)
+		return PyErr_Format(PyExc_Exception, "no GEditor found");
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::GetModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	if (AssetRegistryModule.Get().IsLoadingAssets())
+		Py_RETURN_TRUE;
+	Py_RETURN_FALSE;
+}
+
+PyObject *py_unreal_engine_wait_for_assets(PyObject * self, PyObject * args)
+{
+	if (!GEditor)
+		return PyErr_Format(PyExc_Exception, "no GEditor found");
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::GetModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	while (AssetRegistryModule.Get().IsLoadingAssets())
+	{
+		Py_BEGIN_ALLOW_THREADS;
+		AssetRegistryModule.Get().Tick(-1.0f);
+		FThreadHeartBeat::Get().HeartBeat();
+		FPlatformProcess::SleepNoStats(0.0001f);
+		Py_END_ALLOW_THREADS;
+	}
+
+	Py_RETURN_NONE;
 }
 
 PyObject *py_unreal_engine_find_asset(PyObject * self, PyObject * args)
@@ -796,10 +830,11 @@ PyObject *py_unreal_engine_get_long_package_path(PyObject * self, PyObject * arg
 PyObject *py_unreal_engine_rename_asset(PyObject * self, PyObject * args)
 {
 	char *path;
-	char *object_name;
-	if (!PyArg_ParseTuple(args, "ss:rename_asset", &path, &object_name))
+	char *destination;
+	PyObject *py_only_soft = nullptr;
+	if (!PyArg_ParseTuple(args, "ss|O:rename_asset", &path, &destination, &py_only_soft))
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	if (!GEditor)
@@ -812,11 +847,29 @@ PyObject *py_unreal_engine_rename_asset(PyObject * self, PyObject * args)
 
 	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
-	UObject *u_object = asset.GetAsset();
 	TArray<FAssetRenameData> AssetsAndNames;
-	const FString PackagePath = FPackageName::GetLongPackagePath(u_object->GetOutermost()->GetName());
-	const FString newname(UTF8_TO_TCHAR(object_name));
-	new(AssetsAndNames) FAssetRenameData(u_object, PackagePath, newname);
+	FAssetRenameData RenameData;
+	RenameData.Asset = asset.GetAsset();
+
+	FString Destination = FString(UTF8_TO_TCHAR(destination));
+
+	if (Destination.StartsWith("/"))
+	{
+		RenameData.NewPackagePath = FPackageName::GetLongPackagePath(Destination);
+		RenameData.NewName = FPackageName::GetShortName(Destination);
+	}
+	else
+	{
+		RenameData.NewPackagePath = FPackageName::GetLongPackagePath(UTF8_TO_TCHAR(path));
+		RenameData.NewName = Destination;
+	}
+
+	if (py_only_soft && PyObject_IsTrue(py_only_soft))
+	{
+		RenameData.bOnlyFixSoftReferences = true;
+	}
+
+	AssetsAndNames.Add(RenameData);
 #if ENGINE_MINOR_VERSION < 19
 	AssetToolsModule.Get().RenameAssets(AssetsAndNames);
 #else
@@ -865,6 +918,7 @@ PyObject *py_unreal_engine_duplicate_asset(PyObject * self, PyObject * args)
 		return PyErr_Format(PyExc_Exception, "unable to duplicate asset %s", path);
 	}
 
+	FAssetRegistryModule::AssetCreated(new_asset);
 	Py_RETURN_UOBJECT(new_asset);
 }
 
@@ -1383,7 +1437,7 @@ PyObject *py_unreal_engine_reload_blueprint(PyObject * self, PyObject * args)
 		reloaded_bp = FKismetEditorUtilities::ReloadBlueprint(bp);
 	Py_END_ALLOW_THREADS
 
-	Py_RETURN_UOBJECT(reloaded_bp);
+		Py_RETURN_UOBJECT(reloaded_bp);
 }
 
 PyObject *py_unreal_engine_compile_blueprint(PyObject * self, PyObject * args)
@@ -1400,7 +1454,7 @@ PyObject *py_unreal_engine_compile_blueprint(PyObject * self, PyObject * args)
 		return PyErr_Format(PyExc_Exception, "uobject is not a UBlueprint");
 
 	Py_BEGIN_ALLOW_THREADS
-	FKismetEditorUtilities::CompileBlueprint(bp);
+		FKismetEditorUtilities::CompileBlueprint(bp);
 	Py_END_ALLOW_THREADS
 
 		Py_RETURN_NONE;
@@ -1697,7 +1751,7 @@ PyObject *py_unreal_engine_blueprint_add_function(PyObject * self, PyObject * ar
 	{
 		return nullptr;
 	}
-		
+
 	UBlueprint *bp = ue_py_check_type<UBlueprint>(py_blueprint);
 	if (!bp)
 		return PyErr_Format(PyExc_Exception, "argument is not a UBlueprint");
@@ -1903,9 +1957,29 @@ PyObject *py_unreal_engine_editor_on_asset_post_import(PyObject * self, PyObject
 	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "object is not a callable");
 
-	TSharedRef<FPythonSmartDelegate> py_delegate = MakeShared<FPythonSmartDelegate>();
+	// will brutally leak
+	FPythonSmartDelegate *py_delegate = new FPythonSmartDelegate();
 	py_delegate->SetPyCallable(py_callable);
-	FEditorDelegates::OnAssetPostImport.AddSP(py_delegate, &FPythonSmartDelegate::PyFOnAssetPostImport);
+	FEditorDelegates::OnAssetPostImport.AddRaw(py_delegate, &FPythonSmartDelegate::PyFOnAssetPostImport);
+	Py_RETURN_NONE;
+}
+
+PyObject *py_unreal_engine_on_main_frame_creation_finished(PyObject * self, PyObject * args)
+{
+	PyObject *py_callable;
+	if (!PyArg_ParseTuple(args, "O:on_main_frame_creation_finished", &py_callable))
+	{
+		return NULL;
+	}
+
+	if (!PyCallable_Check(py_callable))
+		return PyErr_Format(PyExc_Exception, "object is not a callable");
+
+	// will brutally leak
+	FPythonSmartDelegate *py_delegate = new FPythonSmartDelegate();
+	py_delegate->SetPyCallable(py_callable);
+	IMainFrameModule& MainFrameModule = FModuleManager::LoadModuleChecked<IMainFrameModule>(TEXT("MainFrame"));
+	MainFrameModule.OnMainFrameCreationFinished().AddRaw(py_delegate, &FPythonSmartDelegate::PyFOnMainFrameCreationFinished);
 	Py_RETURN_NONE;
 }
 
@@ -2003,8 +2077,8 @@ PyObject *py_ue_factory_create_new(ue_PyUObject *self, PyObject * args)
 
 	if (u_object)
 	{
-	FAssetRegistryModule::AssetCreated(u_object);
-	outer->MarkPackageDirty();
+		FAssetRegistryModule::AssetCreated(u_object);
+		outer->MarkPackageDirty();
 	}
 
 	Py_END_ALLOW_THREADS;
@@ -2075,11 +2149,16 @@ PyObject *py_unreal_engine_add_level_to_world(PyObject *self, PyObject * args)
 		return PyErr_Format(PyExc_Exception, "argument is not a UWorld");
 	}
 
+	if (!FPackageName::DoesPackageExist(UTF8_TO_TCHAR(name), nullptr, nullptr))
+		return PyErr_Format(PyExc_Exception, "package does not exist");
+
 	UClass *streaming_mode_class = ULevelStreamingKismet::StaticClass();
 	if (py_bool && PyObject_IsTrue(py_bool))
 	{
 		streaming_mode_class = ULevelStreamingAlwaysLoaded::StaticClass();
 	}
+
+
 
 #if ENGINE_MINOR_VERSION >= 17
 	ULevelStreaming *level_streaming = EditorLevelUtils::AddLevelToWorld(u_world, UTF8_TO_TCHAR(name), streaming_mode_class);

@@ -24,6 +24,10 @@
 
 #include "Runtime/Launch/Public/LaunchEngineLoop.h"
 
+#if PLATFORM_MAC
+#include "Runtime/Core/Public/Mac/CocoaThread.h"
+#endif
+
 
 PyObject *py_unreal_engine_log(PyObject * self, PyObject * args)
 {
@@ -426,6 +430,21 @@ PyObject *py_unreal_engine_unload_package(PyObject * self, PyObject * args)
 
 	Py_RETURN_NONE;
 }
+
+PyObject *py_unreal_engine_get_package_filename(PyObject * self, PyObject * args)
+{
+	char *name;
+	if (!PyArg_ParseTuple(args, "s:get_package_filename", &name))
+	{
+		return NULL;
+	}
+
+	FString Filename;
+	if (!FPackageName::DoesPackageExist(FString(UTF8_TO_TCHAR(name)), nullptr, &Filename))
+		return PyErr_Format(PyExc_Exception, "package does not exist");
+
+	return PyUnicode_FromString(TCHAR_TO_UTF8(*Filename));
+}
 #endif
 
 PyObject *py_unreal_engine_load_class(PyObject * self, PyObject * args)
@@ -812,7 +831,8 @@ PyObject *py_unreal_engine_tobject_iterator(PyObject * self, PyObject * args)
 PyObject *py_unreal_engine_create_and_dispatch_when_ready(PyObject * self, PyObject * args)
 {
 	PyObject *py_callable;
-	if (!PyArg_ParseTuple(args, "O:create_and_dispatch_when_ready", &py_callable))
+	int named_thread = (int)ENamedThreads::GameThread;
+	if (!PyArg_ParseTuple(args, "O|i:create_and_dispatch_when_ready", &py_callable, &named_thread))
 	{
 		return NULL;
 	}
@@ -821,6 +841,7 @@ PyObject *py_unreal_engine_create_and_dispatch_when_ready(PyObject * self, PyObj
 		return PyErr_Format(PyExc_TypeError, "argument is not callable");
 
 	Py_INCREF(py_callable);
+
 
 	FGraphEventRef task = FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
 		FScopePythonGIL gil;
@@ -834,15 +855,55 @@ PyObject *py_unreal_engine_create_and_dispatch_when_ready(PyObject * self, PyObj
 			unreal_engine_py_log_error();
 		}
 		Py_DECREF(py_callable);
-	}, TStatId(), nullptr, ENamedThreads::GameThread);
+	}, TStatId(), nullptr, (ENamedThreads::Type)named_thread);
 
+
+	Py_BEGIN_ALLOW_THREADS;
 	FTaskGraphInterface::Get().WaitUntilTaskCompletes(task);
+	Py_END_ALLOW_THREADS;
 	// TODO Implement signal triggering in addition to WaitUntilTaskCompletes
 	// FTaskGraphInterface::Get().TriggerEventWhenTaskCompletes
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
+
+
+#if PLATFORM_MAC
+PyObject *py_unreal_engine_main_thread_call(PyObject * self, PyObject * args)
+{
+	PyObject *py_callable;
+	if (!PyArg_ParseTuple(args, "O|:main_thread_call", &py_callable))
+	{
+		return NULL;
+	}
+
+	if (!PyCallable_Check(py_callable))
+		return PyErr_Format(PyExc_TypeError, "argument is not callable");
+
+	Py_INCREF(py_callable);
+
+	Py_BEGIN_ALLOW_THREADS;
+	MainThreadCall(^{
+		FScopePythonGIL gil;
+		PyObject *ret = PyObject_CallObject(py_callable, nullptr);
+		if (ret)
+		{
+			Py_DECREF(ret);
+		}
+		else
+		{
+			unreal_engine_py_log_error();
+		}
+		Py_DECREF(py_callable);
+		});
+	Py_END_ALLOW_THREADS;
+
+	Py_RETURN_NONE;
+}
+#endif
+
+
+
 
 PyObject *py_unreal_engine_get_game_viewport_size(PyObject *self, PyObject * args)
 {
@@ -1415,8 +1476,7 @@ PyObject *py_unreal_engine_clipboard_paste(PyObject * self, PyObject * args)
 	FGenericPlatformMisc::ClipboardPaste(clipboard);
 #endif
 	return PyUnicode_FromString(TCHAR_TO_UTF8(*clipboard));
-}
-PyObject *py_unreal_engine_console_exec(PyObject * self, PyObject * args)
+}PyObject *py_unreal_engine_console_exec(PyObject * self, PyObject * args)
 {
 
     char *command;

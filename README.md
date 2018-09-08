@@ -797,7 +797,7 @@ Pay attention to not call app.exec_() as it will result in Qt taking control of 
 
 ```python
 
-# save is as ueqt.py
+# save it as ueqt.py
 import sys
 import unreal_engine as ue
 import PySide2
@@ -855,9 +855,13 @@ widget = MyWidget()
 widget.resize(800, 600)
 widget.show()
 
+root_window = ue.get_editor_window()
+root_window.set_as_owner(widget.winId())
 ```
 
 (no need to allocate a new Qt app, or start it, as the UE4 Editor, thanks to to ueqt module is now the Qt app itself)
+
+Note the 2 final lines: they 'attach' the Qt window as a 'child' of the editor root window. Note that on windows platform this is not simple parenting but 'ownership'.
 
 Memory management
 -----------------

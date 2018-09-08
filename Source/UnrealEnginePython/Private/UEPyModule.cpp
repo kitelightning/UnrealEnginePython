@@ -183,6 +183,23 @@ static PyObject *py_unreal_engine_exec(PyObject * self, PyObject * args)
 	Py_RETURN_NONE;
 }
 
+
+#if PLATFORM_MAC
+static PyObject *py_unreal_engine_exec_in_main_thread(PyObject * self, PyObject * args)
+{
+	char *filename = nullptr;
+	if (!PyArg_ParseTuple(args, "s:exec_in_main_thread", &filename))
+	{
+		return NULL;
+	}
+	FUnrealEnginePythonModule &PythonModule = FModuleManager::GetModuleChecked<FUnrealEnginePythonModule>("UnrealEnginePython");
+	Py_BEGIN_ALLOW_THREADS;
+	PythonModule.RunFileInMainThread(filename);
+	Py_END_ALLOW_THREADS;
+	Py_RETURN_NONE;
+}
+#endif
+
 static PyObject *py_ue_get_py_proxy(ue_PyUObject *self, PyObject * args)
 {
 
@@ -197,6 +214,14 @@ static PyObject *py_ue_get_py_proxy(ue_PyUObject *self, PyObject * args)
 	Py_RETURN_NONE;
 }
 
+static PyObject *py_unreal_engine_shutdown(PyObject *self, PyObject * args)
+{
+
+	GIsRequestingExit = true;
+
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef unreal_engine_methods[] = {
 	{ "log", py_unreal_engine_log, METH_VARARGS, "" },
 	{ "log_warning", py_unreal_engine_log_warning, METH_VARARGS, "" },
@@ -206,6 +231,7 @@ static PyMethodDef unreal_engine_methods[] = {
     { "is_running_game", py_unreal_engine_is_running_game, METH_VARARGS, "" },
     { "is_running_commandlet", py_unreal_engine_is_running_commandlet, METH_VARARGS, "" },
     { "is_running_dedicated_server", py_unreal_engine_is_running_dedicated_server, METH_VARARGS, "" },
+	{ "shutdown", py_unreal_engine_shutdown, METH_VARARGS, "" },
 
 	{ "add_on_screen_debug_message", py_unreal_engine_add_on_screen_debug_message, METH_VARARGS, "" },
 	{ "print_string", py_unreal_engine_print_string, METH_VARARGS, "" },
@@ -226,6 +252,7 @@ static PyMethodDef unreal_engine_methods[] = {
 	{ "load_package", py_unreal_engine_load_package, METH_VARARGS, "" },
 #if WITH_EDITOR
 	{ "unload_package", py_unreal_engine_unload_package, METH_VARARGS, "" },
+	{ "get_package_filename", py_unreal_engine_get_package_filename, METH_VARARGS, "" },
 #endif
 	{ "get_forward_vector", py_unreal_engine_get_forward_vector, METH_VARARGS, "" },
 	{ "get_up_vector", py_unreal_engine_get_up_vector, METH_VARARGS, "" },
@@ -321,6 +348,10 @@ static PyMethodDef unreal_engine_methods[] = {
 
 	{ "get_selected_assets", py_unreal_engine_get_selected_assets, METH_VARARGS, "" },
 	{ "get_assets_by_class", py_unreal_engine_get_assets_by_class, METH_VARARGS, "" },
+
+	{ "is_loading_assets", py_unreal_engine_is_loading_assets, METH_VARARGS, "" },
+	{ "wait_for_assets", py_unreal_engine_wait_for_assets, METH_VARARGS, "" },
+
 	{ "sync_browser_to_assets", py_unreal_engine_editor_sync_browser_to_assets, METH_VARARGS, "" },
 
 	{ "get_asset_referencers", py_unreal_engine_get_asset_referencers, METH_VARARGS, "" },
@@ -386,6 +417,7 @@ static PyMethodDef unreal_engine_methods[] = {
 	{ "move_viewport_cameras_to_actor", py_unreal_engine_move_viewport_cameras_to_actor, METH_VARARGS, "" },
 
 	{ "editor_on_asset_post_import", py_unreal_engine_editor_on_asset_post_import, METH_VARARGS, "" },
+	{ "on_main_frame_creation_finished", py_unreal_engine_on_main_frame_creation_finished, METH_VARARGS, "" },
 
 
 	// transactions
@@ -426,6 +458,9 @@ static PyMethodDef unreal_engine_methods[] = {
 
 
 	{ "create_and_dispatch_when_ready", py_unreal_engine_create_and_dispatch_when_ready, METH_VARARGS, "" },
+#if PLATFORM_MAC
+	{ "main_thread_call", py_unreal_engine_main_thread_call, METH_VARARGS, "" },
+#endif
 
 	{ "add_ticker", py_unreal_engine_add_ticker, METH_VARARGS, "" },
 	{ "remove_ticker", py_unreal_engine_remove_ticker, METH_VARARGS, "" },
@@ -436,6 +471,10 @@ static PyMethodDef unreal_engine_methods[] = {
 	{ "exec", py_unreal_engine_exec, METH_VARARGS, "" },
 #endif
 	{ "py_exec", py_unreal_engine_exec, METH_VARARGS, "" },
+#if PLATFORM_MAC
+	{ "exec_in_main_thread", py_unreal_engine_exec_in_main_thread, METH_VARARGS, "" },
+	{ "py_exec_in_main_thread", py_unreal_engine_exec_in_main_thread, METH_VARARGS, "" },
+#endif
 
 	{ "get_engine_defined_action_mappings", py_unreal_engine_get_engine_defined_action_mappings, METH_VARARGS, "" },
 
@@ -716,6 +755,7 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "update_compressed_track_map_from_raw", (PyCFunction)py_ue_anim_sequence_update_compressed_track_map_from_raw, METH_VARARGS, "" },
 	{ "update_raw_track", (PyCFunction)py_ue_anim_sequence_update_raw_track, METH_VARARGS, "" },
 	{ "apply_raw_anim_changes", (PyCFunction)py_ue_anim_sequence_apply_raw_anim_changes, METH_VARARGS, "" },
+	{ "add_key_to_sequence", (PyCFunction)py_ue_anim_add_key_to_sequence, METH_VARARGS, "" },
 #endif
 	{ "add_anim_composite_section", (PyCFunction)py_ue_add_anim_composite_section, METH_VARARGS, "" },
 #endif

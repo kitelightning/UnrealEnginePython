@@ -778,7 +778,9 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 			PyObject *f_value = PyNumber_Float(py_value);
 			float value = PyFloat_AsDouble(f_value);
 			Py_DECREF(f_value);
+#if ENGINE_MINOR_VERSION < 20
 			section_float->AddKey(time, value, (EMovieSceneKeyInterpolation)interpolation);
+#endif
 			Py_RETURN_NONE;
 		}
 	}
@@ -790,7 +792,9 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 			bool value = false;
 			if (PyObject_IsTrue(py_value))
 				value = true;
+#if ENGINE_MINOR_VERSION < 20
 			section_bool->AddKey(time, value, (EMovieSceneKeyInterpolation)interpolation);
+#endif
 			Py_RETURN_NONE;
 		}
 	}
@@ -802,6 +806,7 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 			bool unwind = (py_unwind && PyObject_IsTrue(py_unwind));
 			FTransform transform = py_ue_ftransform_get(py_transform);
 
+#if ENGINE_MINOR_VERSION < 20
 			FTransformKey tx = FTransformKey(EKey3DTransformChannel::Translation, EAxis::X, transform.GetLocation().X, unwind);
 			FTransformKey ty = FTransformKey(EKey3DTransformChannel::Translation, EAxis::Y, transform.GetLocation().Y, unwind);
 			FTransformKey tz = FTransformKey(EKey3DTransformChannel::Translation, EAxis::Z, transform.GetLocation().Z, unwind);
@@ -823,7 +828,7 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 			section_transform->AddKey(time, sx, (EMovieSceneKeyInterpolation)interpolation);
 			section_transform->AddKey(time, sy, (EMovieSceneKeyInterpolation)interpolation);
 			section_transform->AddKey(time, sz, (EMovieSceneKeyInterpolation)interpolation);
-
+#endif
 			Py_RETURN_NONE;
 		}
 	}
@@ -832,14 +837,17 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 	{
 		if (ue_PyFVector *py_vector = py_ue_is_fvector(py_value))
 		{
-			FVector vec = py_ue_fvector_get(py_vector);
+			FVector vec = py_vector->vec;
+#if ENGINE_MINOR_VERSION < 20
 			FVectorKey vx = FVectorKey(EKeyVectorChannel::X, vec.X);
 			FVectorKey vy = FVectorKey(EKeyVectorChannel::Y, vec.Y);
 			FVectorKey vz = FVectorKey(EKeyVectorChannel::Z, vec.Z);
 
+
 			section_vector->AddKey(time, vx, (EMovieSceneKeyInterpolation)interpolation);
 			section_vector->AddKey(time, vy, (EMovieSceneKeyInterpolation)interpolation);
 			section_vector->AddKey(time, vz, (EMovieSceneKeyInterpolation)interpolation);
+#endif
 
 			Py_RETURN_NONE;
 		}
@@ -988,7 +996,7 @@ PyObject *py_ue_sequencer_remove_track(ue_PyUObject *self, PyObject * args)
 		Py_RETURN_TRUE;
 
 	Py_RETURN_FALSE;
-}
+		}
 
 // @third party code - BEGIN Bebylon - #ThirdParty-Python: WITH_KNL_PYEXT - GetSelectedSections() is not exported in vanilla 4.17 
 #if WITH_KNL_PYEXT
@@ -1218,10 +1226,12 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 			{
 				ChannelAxis = EAxis::Z;
 			}
+#if ENGINE_MINOR_VERSION < 20
 			section->GetTranslationCurve(ChannelAxis).SetDefaultValue(DefaultTransform.GetLocation()[ChannelIndex]);
 			section->GetRotationCurve(ChannelAxis).SetDefaultValue(DefaultTransform.GetRotation().Euler()[ChannelIndex]);
 			section->GetScaleCurve(ChannelAxis).SetDefaultValue(DefaultTransform.GetScale3D()[ChannelIndex]);
-	}
+#endif
+		}
 #else
 		CurveAPI.GetConvertedTransformCurveData(NodeName, Translation[0], Translation[1], Translation[2], EulerRotation[0], EulerRotation[1], EulerRotation[2], Scale[0], Scale[1], Scale[2]);
 
@@ -1252,7 +1262,9 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 				if (CurveIndex == 0)
 				{
 					CurveFloat = &Translation[ChannelIndex];
+#if ENGINE_MINOR_VERSION < 20
 					ChannelCurve = &section->GetTranslationCurve(ChannelAxis);
+#endif
 					if (ChannelIndex == 1)
 					{
 						bNegative = true;
@@ -1261,7 +1273,9 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 				else if (CurveIndex == 1)
 				{
 					CurveFloat = &EulerRotation[ChannelIndex];
+#if ENGINE_MINOR_VERSION < 20
 					ChannelCurve = &section->GetRotationCurve(ChannelAxis);
+#endif
 					if (ChannelIndex == 1 || ChannelIndex == 2)
 					{
 						bNegative = true;
@@ -1270,7 +1284,9 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 				else if (CurveIndex == 2)
 				{
 					CurveFloat = &Scale[ChannelIndex];
+#if ENGINE_MINOR_VERSION < 20
 					ChannelCurve = &section->GetScaleCurve(ChannelAxis);
+#endif
 				}
 
 				if (ChannelCurve != nullptr && CurveFloat != nullptr)
@@ -1300,7 +1316,9 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 							LeaveTangent = -LeaveTangent;
 						}
 
+#if ENGINE_MINOR_VERSION < 20
 						FMatineeImportTools::SetOrAddKey(*ChannelCurve, CurveFloat->Points[KeyIndex].InVal, CurveFloat->Points[KeyIndex].OutVal, ArriveTangent, LeaveTangent, CurveFloat->Points[KeyIndex].InterpMode);
+#endif
 					}
 
 					ChannelCurve->RemoveRedundantKeys(KINDA_SMALL_NUMBER);
@@ -1309,21 +1327,23 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 			}
 		}
 
+#if ENGINE_MINOR_VERSION < 20
 		section->SetStartTime(MinTime);
 		section->SetEndTime(MaxTime);
+#endif
 
 		FbxImporter->ReleaseScene();
 		ImportOptions->bConvertScene = bConverteScene;
 		ImportOptions->bConvertSceneUnit = bConverteScene;
 		ImportOptions->bForceFrontXAxis = bConverteScene;
 		Py_RETURN_NONE;
-}
+		}
 
 	FbxImporter->ReleaseScene();
 	ImportOptions->bConvertScene = bConverteScene;
 	ImportOptions->bConvertSceneUnit = bConverteSceneUnit;
 	ImportOptions->bForceFrontXAxis = bForceFrontXAxis;
 	return PyErr_Format(PyExc_Exception, "unable to find specified node in Fbx file");
-}
+	}
 #endif
 

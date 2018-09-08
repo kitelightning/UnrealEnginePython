@@ -114,6 +114,7 @@
 
 #include "Runtime/Core/Public/Misc/Attribute.h"
 #include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
+#include "Runtime/SlateCore/Public/Styling/SlateStyleRegistry.h"
 
 FReply FPythonSlateDelegate::OnMouseEvent(const FGeometry &geometry, const FPointerEvent &pointer_event)
 {
@@ -284,11 +285,11 @@ void FPythonSlateDelegate::OnTabClosed(TSharedRef<SDockTab> Tab)
     FScopePythonGIL gil;
 	ue_PySWidget * py_dock_tab = ue_py_get_swidget(Tab);
     PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", (PyObject *)py_dock_tab);
-    if (!ret)
-    {
-        unreal_engine_py_log_error();
-        return;
-    }
+	if (!ret)
+	{
+		unreal_engine_py_log_error();
+		return;
+	}
 	
 	Py_DECREF(ret);
 	Py_DECREF((PyObject*)py_dock_tab);
@@ -336,7 +337,7 @@ void FPythonSlateDelegate::OnPersistVisualState()
         unreal_engine_py_log_error();
     }
 
-    Py_DECREF(ret);
+	Py_DECREF(ret);
 }
 
 void FPythonSlateDelegate::OnFloatCommitted(float value, ETextCommit::Type commit_type)
@@ -916,18 +917,18 @@ ue_PySWidget *ue_py_get_swidget(TSharedRef<SWidget> s_widget)
 {
 	ue_PySWidget *ret = nullptr;
 
-    if (s_widget->GetType().Compare(FName("SWindow")) == 0)
-    {
-        return py_ue_new_swidget<ue_PySWindow>(s_widget, &ue_PySWindowType);
-    }
-    if (s_widget->GetType().Compare(FName("SDockTab")) == 0)
-    {
-        return py_ue_new_swidget<ue_PySDockTab>(s_widget, &ue_PySDockTabType);
-    }
-    else
-    {
-        return py_ue_new_swidget<ue_PySWidget>(s_widget, &ue_PySWidgetType);
-    }
+	if (s_widget->GetType().Compare(FName("SWindow")) == 0)
+	{
+		return py_ue_new_swidget<ue_PySWindow>(s_widget, &ue_PySWindowType);
+	}
+	if (s_widget->GetType().Compare(FName("SDockTab")) == 0)
+	{
+		return py_ue_new_swidget<ue_PySDockTab>(s_widget, &ue_PySDockTabType);
+	}
+	else
+	{
+		return py_ue_new_swidget<ue_PySWidget>(s_widget, &ue_PySWidgetType);
+	}
 
 }
 
@@ -1283,7 +1284,7 @@ PyObject *py_unreal_engine_create_structure_detail_view(PyObject *self, PyObject
 	{
 		Py_INCREF(ue_py_struct);
 		ret->ue_py_struct = ue_py_struct;
-        struct_scope      = MakeShared<FStructOnScope>(ue_py_struct->u_struct, py_ue_uscriptstruct_get_data(ue_py_struct));
+		struct_scope = MakeShared<FStructOnScope>(ue_py_struct->u_struct, ue_py_struct->u_struct_ptr);
 	}
 
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");

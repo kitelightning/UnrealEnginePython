@@ -437,7 +437,7 @@ static PyMethodDef unreal_engine_methods[] = {
 #endif
 
 	{ "engine_tick", py_unreal_engine_engine_tick, METH_VARARGS, "" },
-	
+
 #if WITH_EDITOR
 	{ "tick_rendering_tickables", py_unreal_engine_tick_rendering_tickables, METH_VARARGS, "" },
 	{ "all_viewport_clients", py_unreal_engine_all_viewport_clients , METH_VARARGS, "" },
@@ -1449,7 +1449,7 @@ static PyObject *ue_PyUObject_call(ue_PyUObject *self, PyObject *args, PyObject 
 				}
 			}
 		}
-		return py_ue_wrap_uscriptstruct(u_script_struct, data);
+		return py_ue_new_uscriptstruct(u_script_struct, data);
 	}
 	return PyErr_Format(PyExc_Exception, "the specified uobject has no __call__ support");
 }
@@ -2569,7 +2569,7 @@ bool ue_py_convert_pyobject(PyObject *py_obj, UProperty *prop, uint8 *buffer, in
 			if (casted_prop->Struct == py_u_struct->u_struct)
 			{
 				uint8 *dest = casted_prop->ContainerPtrToValuePtr<uint8>(buffer, index);
-				FMemory::Memcpy(dest, py_ue_uscriptstruct_get_data(py_u_struct), py_u_struct->u_struct->GetStructureSize());
+				FMemory::Memcpy(dest, py_u_struct->u_struct_ptr, py_u_struct->u_struct->GetStructureSize());
 				return true;
 			}
 		}
@@ -2918,8 +2918,8 @@ PyObject *py_ue_ufunction_call(UFunction *u_function, UObject *u_obj, PyObject *
 #endif
 			}
 #endif
-			}
 		}
+	}
 
 
 	Py_ssize_t tuple_len = PyTuple_Size(args);
@@ -3033,7 +3033,7 @@ PyObject *py_ue_ufunction_call(UFunction *u_function, UObject *u_obj, PyObject *
 
 	Py_INCREF(Py_None);
 	return Py_None;
-	}
+}
 
 
 PyObject *ue_bind_pyevent(ue_PyUObject *u_obj, FString event_name, PyObject *py_callable, bool fail_on_wrong_property)
@@ -3429,7 +3429,7 @@ FGuid *ue_py_check_fguid(PyObject *py_obj)
 
 	if (ue_py_struct->u_struct == TBaseStructure<FGuid>::Get())
 	{
-		return (FGuid*)(py_ue_uscriptstruct_get_data(ue_py_struct));
+		return (FGuid*)ue_py_struct->u_struct_ptr;
 	}
 
 	return nullptr;
@@ -3444,7 +3444,7 @@ uint8 * do_ue_py_check_struct(PyObject *py_obj, UScriptStruct* chk_u_struct)
 
 	if (ue_py_struct->u_struct == chk_u_struct)
 	{
-		return py_ue_uscriptstruct_get_data(ue_py_struct);
+		return ue_py_struct->u_struct_ptr;
 	}
 
 	return nullptr;

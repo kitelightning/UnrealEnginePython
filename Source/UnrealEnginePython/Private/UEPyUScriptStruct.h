@@ -7,18 +7,15 @@ class UScriptStruct;
 typedef struct
 {
 	PyObject_HEAD
-	/* Type-specific fields go here. */
-	UScriptStruct *u_struct;
-	uint8 *data;
-	// if 1, data points to un-owned memory
-	int is_ptr;
-	// points to the original struct memory (do not try this at home !)
-	uint8 *original_data;
+		/* Type-specific fields go here. */
+		UScriptStruct *u_struct;
+	uint8 *u_struct_ptr;
+	// if set, the struct is responsible for freeing memory
+	int u_struct_owned;
 } ue_PyUScriptStruct;
 
 PyObject *py_ue_new_uscriptstruct(UScriptStruct *, uint8 *);
-PyObject *py_ue_wrap_uscriptstruct(UScriptStruct *, uint8 *);
-void ue_py_uscriptstruct_alloc(ue_PyUScriptStruct *, UScriptStruct *, uint8 const*, bool);
+PyObject *py_ue_new_owned_uscriptstruct(UScriptStruct *, uint8 *);
 ue_PyUScriptStruct *py_ue_is_uscriptstruct(PyObject *);
 
 inline static uint8* py_ue_uscriptstruct_get_data(ue_PyUScriptStruct *py_u_struct)

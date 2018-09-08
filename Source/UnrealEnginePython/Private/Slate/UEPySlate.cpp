@@ -835,6 +835,7 @@ FLinearColor FPythonSlateDelegate::GetterFLinearColor() const
 
 TSharedRef<SDockTab> FPythonSlateDelegate::SpawnPythonTab(const FSpawnTabArgs &args, bool bShouldAutosize)
 {
+    FScopePythonGIL gil;
 	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", bShouldAutosize ? Py_True : Py_False);
 	if (!ret)
 	{
@@ -1503,7 +1504,8 @@ PyObject *py_unreal_engine_register_nomad_tab_spawner(PyObject * self, PyObject 
 	char *name;
 	PyObject *py_callable;
     PyObject *py_bool = nullptr;
-	if (!PyArg_ParseTuple(args, "sO|O:register_nomad_tab_spawner", &name, &py_callable, &py_bool))
+	PyObject *py_icon = nullptr;
+	if (!PyArg_ParseTuple(args, "sO|OO:register_nomad_tab_spawner", &name, &py_callable, &py_bool, &py_icon))
 	{
 		return NULL;
 	}
@@ -1520,7 +1522,22 @@ PyObject *py_unreal_engine_register_nomad_tab_spawner(PyObject * self, PyObject 
     bool bshould_auto_size = py_bool && PyObject_IsTrue(py_bool) ? true : false;
 	spawn_tab.BindSP(py_delegate, &FPythonSlateDelegate::SpawnPythonTab, bshould_auto_size);
 
+	FSlateIcon Icon = FSlateIcon();
+	if (py_icon)
+	{
+		ue_PyFSlateIcon *slate_icon = py_ue_is_fslate_icon(py_icon);
+		if (!slate_icon)
+		{
+			return PyErr_Format(PyExc_Exception, "argument is not a FSlateIcon");
+		}
+		Icon = slate_icon->icon;
+	}
+
+
 	FTabSpawnerEntry *spawner_entry = &FGlobalTabmanager::Get()->RegisterNomadTabSpawner(tabName, spawn_tab)
+		.SetDisplayName(FText::FromString((tabName).ToString()))
+		.SetTooltipText(FText::FromString((tabName).ToString()))
+		.SetIcon(Icon)
 #if WITH_EDITOR
 		// TODO: more generic way to set the group
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory())

@@ -353,6 +353,34 @@ static PyObject *py_ue_swidget_new_ref(ue_PySWidget *self, PyObject * args)
 	return (PyObject *)py_ue_new_swidget<ue_PySWidget>(Widget.ToSharedRef(), &ue_PySWidgetType);
 }
 
+static PyObject *py_ue_swidget_assign(ue_PySWidget *self, PyObject * args)
+{
+	char *global_name;
+	if (!PyArg_ParseTuple(args, "s:assign", &global_name))
+	{
+		return nullptr;
+	}
+
+	PyObject *py_globals = PyEval_GetGlobals();
+	if (!py_globals)
+	{
+		return PyErr_Format(PyExc_Exception, "unable to retrieve globals");
+	}
+
+	if (!PyDict_GetItemString(py_globals, global_name))
+	{
+		PyErr_Clear();
+		return PyErr_Format(PyExc_Exception, "global \"%s\" not found", global_name);
+	}
+
+	if (PyDict_SetItemString(py_globals, global_name, (PyObject *)self) < 0)
+	{
+		return PyErr_Format(PyExc_Exception, "unable to assign global \"%s\" to SWidget", global_name);
+	}
+
+	Py_RETURN_SLATE_SELF;
+}
+
 static PyObject *py_ue_swidget_is_valid(ue_PySWidget *self, PyObject * args)
 {
 	TSharedPtr<SWidget> checkPtr = self->Widget;
@@ -363,6 +391,7 @@ static PyObject *py_ue_swidget_is_valid(ue_PySWidget *self, PyObject * args)
 
 	Py_RETURN_FALSE;
 }
+
 
 static PyMethodDef ue_PySWidget_methods[] = {
 	{ "new_ref", (PyCFunction)py_ue_swidget_new_ref, METH_VARARGS, "" },
@@ -389,6 +418,8 @@ static PyMethodDef ue_PySWidget_methods[] = {
 #endif
 	{ "on_mouse_button_down", (PyCFunction)py_ue_swidget_on_mouse_button_down, METH_VARARGS, "" },
 	{ "on_mouse_button_up", (PyCFunction)py_ue_swidget_on_mouse_button_up, METH_VARARGS, "" },
+
+	{ "assign", (PyCFunction)py_ue_swidget_assign, METH_VARARGS, "" },
 	{ NULL }  /* Sentinel */
 };
 
@@ -471,7 +502,7 @@ void ue_python_init_swidget(PyObject *ue_module)
     ue_PySWidgetType.tp_getattro = PyObject_GenericGetAttr;
     ue_PySWidgetType.tp_setattro = PyObject_GenericSetAttr;
     ue_PySWidgetType.tp_dictoffset = offsetof(ue_PySWidget, py_dict);
-    // support for weak references, useful for tests
+	// support for weak references, useful for tests
 	ue_PySWidgetType.tp_weaklistoffset = offsetof(ue_PySWidget, weakreflist);
 
 	if (PyType_Ready(&ue_PySWidgetType) < 0)

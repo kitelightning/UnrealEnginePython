@@ -9,6 +9,8 @@ The python wrapper development has been sponsored by Kite & Lightning (http://ki
 
 This document assumes a python3 environment. If you are using python2, just ensure to use unicode when you see strings.
 
+It is a 'Work In Progress' and its objective is to give the user enough basis to start building its tools. Only a meaningful subset of the available widgets is explained here, pull requests for extending this page are really welcomed.
+
 ## SWidget and ue_PySWidget
 
 SWidget is the base C++ class for all the Slate widgets, it is wrapped in a python object (PyObject) named ue_PySWidget.
@@ -382,12 +384,404 @@ SWindow(client_size=(512, 256), title='Slate Window')(
 )
 ```
 
+![SHorizontalBox2](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SHorizontalBox2.png)
+
+More infos on SHorizontalBox: https://api.unrealengine.com/INT/API/Runtime/SlateCore/Widgets/SHorizontalBox/index.html
+
 ## SGridPanel
+
+This widget allows you to align children in a virtual grid. For each slot you specify the column and row and eventually how much it 'spans' horizontally and verically:
+
+```python
+from unreal_engine import SWindow, STextBlock, SGridPanel, SBorder
+
+margin = 40
+
+SWindow(client_size=(512, 512), title='Slate Window')(
+    SGridPanel()
+    (
+        SBorder(padding=margin)(STextBlock(text='cell0')), column=0, row=0
+    )
+    (
+        SBorder(padding=margin)(STextBlock(text='cell1')), column=1, row=0
+    )
+    (
+        SBorder(padding=margin)(STextBlock(text='cell2')), column=2, row=0
+    )
+    (
+        SBorder(padding=margin)(STextBlock(text='cell3')), column=0, row=1
+    )
+    (
+        SBorder(padding=margin)(STextBlock(text='cell4')), column=3, row=1, row_span=3
+    )
+    (
+        SBorder(padding=margin)(STextBlock(text='cell5')), column=2, row=2
+    )
+    (
+        SBorder(padding=margin)(STextBlock(text='cell6')), column=0, row=3, column_span=2
+    )
+)
+```
+
+![SGridPanel](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SGridPanel.png)
 
 ## SScrollBox
 
+This container allows you to scroll on big series of widgets:
+
+```python
+from unreal_engine import SWindow, STextBlock, SGridPanel, SBorder, SScrollBox
+from unreal_engine.enums import EOrientation
+
+margin = 40
+
+SWindow(client_size=(512, 256), title='Slate Window')(
+    SScrollBox(orientation=EOrientation.Orient_Vertical)
+    (
+        SGridPanel()
+        (
+            SBorder(padding=margin)(STextBlock(text='cell0')), column=0, row=0
+        )
+        (
+            SBorder(padding=margin)(STextBlock(text='cell1')), column=1, row=0
+        )
+        (
+            SBorder(padding=margin)(STextBlock(text='cell2')), column=2, row=0
+        )
+        (
+            SBorder(padding=margin)(STextBlock(text='cell3')), column=0, row=1
+        )
+        (
+            SBorder(padding=margin)(STextBlock(text='cell4')), column=3, row=1, row_span=3
+        )
+        (
+            SBorder(padding=margin)(STextBlock(text='cell5')), column=2, row=2
+        )
+        (
+            SBorder(padding=margin)(STextBlock(text='cell6')), column=0, row=3, column_span=2
+        )
+    )
+)
+```
+
+![SScrollBox](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SScrollBox.png)
+
+More infos here: https://api.unrealengine.com/INT/API/Runtime/Slate/Widgets/Layout/SScrollBox/
+
 ## SButton
+
+It's time for user interaction. The SButton widget raises an event whenevr the user clicks on it:
+
+```python
+from unreal_engine import SWindow, SVerticalBox, SButton
+from unreal_engine.enums import EHorizontalAlignment
+import unreal_engine as ue
+import time
+
+window = SWindow(client_size=(512, 256), title='Slate Window')(
+    SVerticalBox()
+    (
+        SButton(text='Button 001', on_clicked=lambda: ue.log('Hello i am Button001'))
+    )
+    (
+        SButton(text='Button 002', h_align=EHorizontalAlignment.HAlign_Center, on_clicked=lambda: (ue.message_dialog_open(ue.APP_MSG_TYPE_OK, 'Hello i am Button002'), window.bring_to_front()))
+    )
+    (
+        SButton(text='Update title with current time', on_clicked=lambda: window.set_title(str(time.time())))
+    )
+    (
+        SButton(text='Close Window', on_clicked=lambda: window.request_destroy())
+    )
+)
+```
+
+![SButton](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SButton.png)
+
+Note that technically SButton's are containers so you can assign to them another widget:
+
+```python
+SButton(on_clicked=lambda: window.request_destroy())(STextBlock(text='Hello'))
+```
+
+More infos here: https://api.unrealengine.com/INT/API/Runtime/Slate/Widgets/Input/SButton/index.html
+
+## SImage
+
+This widget draw graphics resources (images, solid blocks).
+
+```python
+from unreal_engine import SWindow, SImage, SVerticalBox, FLinearColor, SBorder
+from unreal_engine.structs import SlateBrush, SlateColor, Vector2D
+from unreal_engine.classes import Texture2D
+import unreal_engine as ue
+import os
+
+plugin = unreal_engine.find_plugin('UnrealEnginePython')
+plugin_base_dir = plugin.get_base_dir()
+
+image_file = os.path.join(plugin_base_dir, 'Resources/Icon128.png')
+
+texture = ue.load_object(Texture2D, '/Game/Mannequin/Character/Textures/UE4_LOGO_CARD')
+
+
+window = SWindow(client_size=(128, 512), title='Slate Window', sizing_rule=0)(
+    SVerticalBox()
+    (
+        SImage(image=SlateBrush(ResourceName=image_file, bIsDynamicallyLoaded=True)),
+    )
+    (
+        SImage(image=SlateBrush(ResourceObject=texture))
+    )
+    (
+        SImage(image=SlateBrush(TintColor=SlateColor(SpecifiedColor=FLinearColor(1, 0, 0))))
+    )
+    (
+        SImage(image=SlateBrush(ResourceName=image_file, bIsDynamicallyLoaded=True, TintColor=SlateColor(SpecifiedColor=FLinearColor(0, 1, 0))))
+    )
+    (
+        SBorder()(SImage(image=SlateBrush(ResourceObject=texture, ImageSize=Vector2D(X=64, Y=64)))), auto_height=True
+    )
+)    
+```
+
+![SImage](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SImage.png)
+
+Pay attention to the bIsDynamicallyLoaded field of SlateBrush, if you are passing a non-ue4 resource (via ResourceName) you have to instruct UE to load the resource as a texture (by setting bIsDynamicallyLoaded to true). This is not required when using ResourceObject.
+
+Combining SButton and SImage is pretty handy:
+
+```python
+SButton(on_clicked=lambda: ue.log('Image Clicked'))(SImage(image=SlateBrush(ResourceName=image_file, bIsDynamicallyLoaded=True)))
+```
+
+More infos about SlateBrush:
+
+https://api.unrealengine.com/INT/API/Runtime/SlateCore/Styling/FSlateBrush/index.html
+
 
 ## SEditableTextBox
 
-## SImage
+This widget allows the user to input a string:
+
+```python
+from unreal_engine import SWindow, SEditableTextBox, SHorizontalBox, SButton
+from unreal_engine.classes import Object
+import unreal_engine as ue
+
+asset_name=SEditableTextBox()
+
+window = SWindow(client_size=(512, 32), title='Open Asset', sizing_rule=0)(
+    SHorizontalBox()
+    (
+        asset_name
+    )
+    (
+        SButton(text='Ok', on_clicked=lambda: ue.open_editor_for_asset(ue.load_object(Object, asset_name.get_text()))), auto_width=True
+    )
+)    
+```
+
+![SEditableTextBox](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SEditableTextBox.png)
+
+The get_text() method will return the currently inserted text.
+
+When the user click on 'Ok', the asset specified in the SEditableTextBox will be validated, loaded and opened in the related editor.
+
+More infos (check FArguments) here:
+
+https://api.unrealengine.com/INT/API/Runtime/Slate/Widgets/Input/SEditableTextBox/index.html
+
+
+## The .assign() hack
+
+In the previous example we used a 'mixed' visual style to allow the SEditableTextBox to be assigned to a python variable to be able to reference it in the on_clicked event.
+
+The python SWidget api supports an alternative way for assigning references to SWidget. It is indeed a hack (and honestly not very pythonic), but for big interfaces should simplify the management a lot:
+
+```python
+from unreal_engine import SWindow, SEditableTextBox, SHorizontalBox, SButton
+from unreal_engine.classes import Object
+import unreal_engine as ue
+
+asset_name=None
+
+window = SWindow(client_size=(512, 32), title='Open Asset', sizing_rule=0)(
+    SHorizontalBox()
+    (
+        SEditableTextBox().assign('asset_name')
+    )
+    (
+        SButton(text='Ok', on_clicked=lambda: ue.open_editor_for_asset(ue.load_object(Object, asset_name.get_text()))), auto_width=True
+    )
+)   
+```
+
+Basically the .assign(global_name) method, will map the SWidget to the global item specified as global_name. The .assign() method will check for validity of the passed name, so typos will not be a problem.
+
+## SCheckBox
+
+Very useful for managing boolean values:
+
+```python
+from unreal_engine import SWindow, SEditableTextBox, SHorizontalBox, SButton, SCheckBox, STextBlock
+from unreal_engine.classes import Object
+from unreal_engine.enums import EVerticalAlignment
+import unreal_engine as ue
+
+asset_name=None
+checkbox_bool=False
+
+def open_or_validate(path, only_validate):
+    try:
+        asset = ue.load_object(Object, path)
+    except:
+        ue.message_dialog_open(ue.APP_MSG_TYPE_OK, 'invalid path')
+        return
+        
+    if only_validate:
+        ue.message_dialog_open(ue.APP_MSG_TYPE_OK, 'path is valid')
+    else:
+        ue.open_editor_for_asset(asset)
+
+window = SWindow(client_size=(512, 32), title='Open Asset', sizing_rule=0)(
+    SHorizontalBox()
+    (
+        SEditableTextBox().assign('asset_name')
+    )
+    (
+        STextBlock(text='only validate path'), auto_width=True, v_align=EVerticalAlignment.VAlign_Center
+    )
+    (
+        SCheckBox().assign('checkbox_bool'), auto_width=True
+    )
+    (
+        SButton(text='Ok', on_clicked=lambda: open_or_validate(asset_name.get_text(), checkbox_bool.is_checked())), auto_width=True
+    )
+)   
+```
+
+![SCheckBox](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SCheckBox.png)
+
+## OOP refactoring
+
+Time to refactor the code to be more elegant, and to allow the reuse of custom/complex widgets:
+
+```python
+from unreal_engine import SWindow, SEditableTextBox, SHorizontalBox, SButton, SCheckBox, STextBlock, SVerticalBox
+from unreal_engine.classes import Object
+from unreal_engine.enums import EVerticalAlignment
+import unreal_engine as ue
+
+class AssetOpener(SHorizontalBox):
+
+    def __init__(self):
+        super().__init__(self)
+        self.asset_name_picker = SEditableTextBox()
+        self.only_validate_path = SCheckBox()
+
+        self.add_slot(self.asset_name_picker)
+        self.add_slot(STextBlock(text='only validate path'), auto_width=True, v_align=EVerticalAlignment.VAlign_Center)
+        self.add_slot(self.only_validate_path, auto_width=True)
+        self.add_slot(SButton(text='Ok', on_clicked=self.open_or_validate), auto_width=True)
+
+    def open_or_validate(self):
+        try:
+            asset = ue.load_object(Object, self.asset_name_picker.get_text())
+        except:
+            ue.message_dialog_open(ue.APP_MSG_TYPE_OK, 'invalid path')
+            return
+        
+        if self.only_validate_path.is_checked():
+            ue.message_dialog_open(ue.APP_MSG_TYPE_OK, 'path is valid')
+        else:
+            ue.open_editor_for_asset(asset)
+       
+
+
+window = SWindow(client_size=(512, 64), title='Open Asset', sizing_rule=0)(
+    SVerticalBox()
+    (
+        STextBlock(text='OOP widget below')
+    )
+    (
+        AssetOpener()
+    )
+)    
+```
+
+![OOP](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_OOP.png)
+
+As you can see, you can inherit from SWidget. Obviously you can mix 'visual' style, with fully procedural one, but the use of classes will simplify 'context' management.
+
+## SObjectPropertyEntryBox
+
+This widget allows the user to select an asset from a specific class
+
+```python
+from unreal_engine import SWindow, SObjectPropertyEntryBox
+from unreal_engine.classes import Material
+import unreal_engine as ue
+
+
+
+window = SWindow(client_size=(512, 256), title='Material Selector', sizing_rule=0)(
+    (  
+        SObjectPropertyEntryBox(allowed_class=Material, on_object_changed=lambda choice: ue.open_editor_for_asset(choice.get_asset()))
+    )
+)    
+```
+
+![SObjectPropertyEntryBox](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SObjectPropertyEntryBox.png)
+
+note that the callable executed by on_object_changed receives an FAssetData object as argument (this is why we need to call get_asset())
+
+More infos here: https://api.unrealengine.com/INT/API/Editor/PropertyEditor/SObjectPropertyEntryBox/index.html
+
+## SPythonEditorViewport
+
+This is probably tu funniest widget, an EditorViewportClient and a whole World all in a single SWidget:
+
+```python
+from unreal_engine import SWindow, SPythonEditorViewport, FVector, FRotator
+from unreal_engine.classes import Blueprint
+import unreal_engine as ue
+
+editor_viewport = SPythonEditorViewport()
+world = editor_viewport.get_world()
+world.actor_spawn(ue.load_object(Blueprint, '/Game/ThirdPersonCPP/Blueprints/ThirdPersonCharacter').GeneratedClass)
+editor_viewport_client = editor_viewport.get_editor_viewport_client()
+editor_viewport_client.set_view_location(FVector(-200, 300, 200))
+editor_viewport_client.set_view_rotation(FRotator(0, -30, -90))
+
+window = SWindow(client_size=(512, 256), title='Mannequin Properties', sizing_rule=0)(
+    (  
+        editor_viewport
+    )
+)   
+```
+
+![SPythonEditorViewport](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SPythonEditorViewport.png)
+
+Note that by calling the .simulate(bool) method on the SPythonEditorViewport instance you can enable/disable the world ticking
+
+## Properties Editors
+
+```python
+from unreal_engine import SWindow
+import unreal_engine as ue
+
+window = SWindow(client_size=(512, 256), title='Mannequin Properties', sizing_rule=0)(
+    (  
+        ue.create_detail_view(uobject=ue.get_selected_assets()[0].GeneratedClass.get_cdo())
+    )
+)    
+```
+
+![SDetailView](https://github.com/20tab/UnrealEnginePython/raw/master/docs/screenshots/slate_SDetailView.png)
+
+
+## SPythonListView
+
+## SPythonTreeView
+
+## SPythonWidget

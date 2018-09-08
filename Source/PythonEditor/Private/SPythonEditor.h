@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "SlateCore.h"
+#include "Runtime/Slate/Public/Widgets/Layout/SScrollBar.h"
+
 class SPythonEditor : public SCompoundWidget
 {
 public:

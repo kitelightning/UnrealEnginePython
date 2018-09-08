@@ -85,8 +85,7 @@ PyObject *py_ue_sequencer_changed(ue_PyUObject *self, PyObject * args)
 
 	}
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 #endif
 

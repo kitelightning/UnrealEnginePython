@@ -38,6 +38,7 @@
 #include "Wrappers/UEPyFVector.h"
 #include "Wrappers/UEPyFAssetData.h"
 #include "Wrappers/UEPyFEditorViewportClient.h"
+#include "Wrappers/UEPyIAssetEditorInstance.h"
 
 #include "UEPyIPlugin.h"
 
@@ -474,7 +475,7 @@ PyObject *py_unreal_engine_import_asset(PyObject * self, PyObject * args)
 	}
 	else if (PyUnicodeOrString_Check(obj))
 	{
-		char *class_name = PyUnicode_AsUTF8(obj);
+		const char *class_name = UEPyUnicode_AsUTF8(obj);
 		UClass *u_class = FindObject<UClass>(ANY_PACKAGE, UTF8_TO_TCHAR(class_name));
 		if (u_class)
 		{
@@ -1167,25 +1168,66 @@ PyObject *py_unreal_engine_get_selected_assets(PyObject * self, PyObject * args)
 	return assets_list;
 }
 
+PyObject *py_unreal_engine_get_all_edited_assets(PyObject * self, PyObject * args)
+{
+	TArray<UObject *> assets = FAssetEditorManager::Get().GetAllEditedAssets();
+	PyObject *assets_list = PyList_New(0);
+
+	for (UObject *asset : assets)
+	{
+		ue_PyUObject *ret = ue_get_python_uobject(asset);
+		if (ret)
+		{
+			PyList_Append(assets_list, (PyObject *)ret);
+		}
+	}
+
+	return assets_list;
+}
+
 PyObject *py_unreal_engine_open_editor_for_asset(PyObject * self, PyObject * args)
 {
 	PyObject *py_obj;
 
 	if (!PyArg_ParseTuple(args, "O:open_editor_for_asset", &py_obj))
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	UObject *u_obj = ue_py_check_type<UObject>(py_obj);
 	if (!u_obj)
 		return PyErr_Format(PyExc_Exception, "argument is not a UObject");
+
 	if (FAssetEditorManager::Get().OpenEditorForAsset(u_obj))
 	{
-		Py_INCREF(Py_True);
-		return Py_True;
+		Py_RETURN_TRUE;
 	}
-	Py_INCREF(Py_False);
-	return Py_False;
+	Py_RETURN_FALSE;
+}
+
+PyObject *py_unreal_engine_find_editor_for_asset(PyObject * self, PyObject * args)
+{
+	PyObject *py_obj;
+	PyObject *py_bool = nullptr;
+
+	if (!PyArg_ParseTuple(args, "O|O:find_editor_for_asset", &py_obj, &py_bool))
+	{
+		return nullptr;
+	}
+
+	UObject *u_obj = ue_py_check_type<UObject>(py_obj);
+	if (!u_obj)
+		return PyErr_Format(PyExc_Exception, "argument is not a UObject");
+
+	bool bFocus = false;
+	if (py_bool && PyObject_IsTrue(py_bool))
+		bFocus = true;
+
+	IAssetEditorInstance *instance = FAssetEditorManager::Get().FindEditorForAsset(u_obj, bFocus);
+	if (!instance)
+		return PyErr_Format(PyExc_Exception, "no editor found for asset");
+
+	return py_ue_new_iasset_editor_instance(instance);
 }
 
 PyObject *py_unreal_engine_close_editor_for_asset(PyObject * self, PyObject * args)
@@ -1194,7 +1236,7 @@ PyObject *py_unreal_engine_close_editor_for_asset(PyObject * self, PyObject * ar
 
 	if (!PyArg_ParseTuple(args, "O:close_editor_for_asset", &py_obj))
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	UObject *u_obj = ue_py_check_type<UObject>(py_obj);
@@ -1202,16 +1244,14 @@ PyObject *py_unreal_engine_close_editor_for_asset(PyObject * self, PyObject * ar
 		return PyErr_Format(PyExc_Exception, "argument is not a UObject");
 	FAssetEditorManager::Get().CloseAllEditorsForAsset(u_obj);
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 PyObject *py_unreal_engine_close_all_asset_editors(PyObject * self, PyObject * args)
 {
 	FAssetEditorManager::Get().CloseAllAssetEditors();
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 PyObject *py_unreal_engine_set_fbx_import_option(PyObject * self, PyObject * args)
@@ -1555,7 +1595,7 @@ PyObject *py_unreal_engine_blueprint_add_member_variable(PyObject * self, PyObje
 
 	if (PyUnicode_Check(py_type))
 	{
-		char *in_type = PyUnicode_AsUTF8(py_type);
+		const char *in_type = UEPyUnicode_AsUTF8(py_type);
 
 		bool is_array = false;
 		if (py_is_array && PyObject_IsTrue(py_is_array))

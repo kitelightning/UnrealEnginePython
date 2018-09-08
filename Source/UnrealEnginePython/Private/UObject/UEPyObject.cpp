@@ -105,9 +105,15 @@ PyObject *py_ue_set_obj_flags(ue_PyUObject * self, PyObject * args)
 	ue_py_check(self);
 
 	uint64 flags;
-	if (!PyArg_ParseTuple(args, "K:set_obj_flags", &flags))
+	PyObject *py_reset = nullptr;
+	if (!PyArg_ParseTuple(args, "K|O:set_obj_flags", &flags, &py_reset))
 	{
 		return nullptr;
+	}
+
+	if (py_reset && PyObject_IsTrue(py_reset))
+	{
+		self->ue_object->ClearFlags(self->ue_object->GetFlags());
 	}
 
 	self->ue_object->SetFlags((EObjectFlags)flags);
@@ -115,6 +121,31 @@ PyObject *py_ue_set_obj_flags(ue_PyUObject * self, PyObject * args)
 	Py_RETURN_NONE;
 }
 
+PyObject *py_ue_clear_obj_flags(ue_PyUObject * self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	uint64 flags;
+	if (!PyArg_ParseTuple(args, "K:clear_obj_flags", &flags))
+	{
+		return nullptr;
+	}
+
+	self->ue_object->ClearFlags((EObjectFlags)flags);
+
+	Py_RETURN_NONE;
+}
+
+PyObject *py_ue_reset_obj_flags(ue_PyUObject * self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	self->ue_object->ClearFlags(self->ue_object->GetFlags());
+
+	Py_RETURN_NONE;
+}
 
 #if WITH_EDITOR
 
@@ -625,7 +656,7 @@ PyObject *py_ue_call_function(ue_PyUObject * self, PyObject * args, PyObject *kw
 
 	if (PyUnicodeOrString_Check(func_id))
 	{
-		function = self->ue_object->FindFunction(FName(UTF8_TO_TCHAR(PyUnicode_AsUTF8(func_id))));
+		function = self->ue_object->FindFunction(FName(UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(func_id))));
 	}
 
 	if (!function)
@@ -1527,7 +1558,7 @@ PyObject *py_ue_set_property_flags(ue_PyUObject *self, PyObject * args)
 	else
 	{
 		u_struct = (UStruct *)self->ue_object->GetClass();
-	}
+}
 
 	UProperty *u_property = u_struct->FindPropertyByName(FName(UTF8_TO_TCHAR(property_name)));
 	if (!u_property)
@@ -1575,7 +1606,7 @@ PyObject *py_ue_add_property_flags(ue_PyUObject *self, PyObject * args)
 	u_property->SetPropertyFlags(u_property->GetPropertyFlags() | (EPropertyFlags)flags);
 #endif
 	Py_RETURN_NONE;
-}
+	}
 
 PyObject *py_ue_get_property_flags(ue_PyUObject *self, PyObject * args)
 {
@@ -2408,7 +2439,7 @@ PyObject *py_ue_add_property(ue_PyUObject * self, PyObject * args)
 			if (is_array || is_map)
 				scope->MarkPendingKill();
 			return PyErr_Format(PyExc_Exception, "unable to allocate new UProperty");
-		}
+	}
 		UMapProperty *u_map = (UMapProperty *)scope;
 
 #if ENGINE_MINOR_VERSION < 20
@@ -2457,7 +2488,7 @@ PyObject *py_ue_add_property(ue_PyUObject * self, PyObject * args)
 		u_map->ValueProp = u_property2;
 
 		u_property = u_map;
-	}
+}
 #endif
 
 	if (u_class == UMulticastDelegateProperty::StaticClass())

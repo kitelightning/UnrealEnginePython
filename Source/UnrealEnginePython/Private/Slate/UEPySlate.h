@@ -153,7 +153,7 @@ ue_PySWidget *ue_py_get_swidget(TSharedRef<SWidget> s_widget);
 
 #define ue_py_slate_farguments_text(param, attribute) ue_py_slate_up(FText, GetterFText, param, attribute)\
 	else if (PyUnicode_Check(value)) {\
-		arguments.attribute(FText::FromString(UTF8_TO_TCHAR(PyUnicode_AsUTF8(value))));\
+		arguments.attribute(FText::FromString(UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(value))));\
 	}\
 	ue_py_slate_down(param)
 
@@ -162,7 +162,7 @@ ue_PySWidget *ue_py_get_swidget(TSharedRef<SWidget> s_widget);
 
 #define ue_py_slate_farguments_string(param, attribute) ue_py_slate_up(FString, GetterFString, param, attribute)\
 	else if (PyUnicode_Check(value)) {\
-		arguments.attribute(UTF8_TO_TCHAR(PyUnicode_AsUTF8(value)));\
+		arguments.attribute(UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(value)));\
 	}\
 	ue_py_slate_down(param)
 
@@ -410,7 +410,7 @@ ue_PySWidget *ue_py_get_swidget(TSharedRef<SWidget> s_widget);
 
 #define ue_py_slate_farguments_optional_string(param, attribute) { PyObject *value = ue_py_dict_get_item(kwargs, param);\
 	if (PyUnicode_Check(value)) {\
-		arguments.attribute(UTF8_TO_TCHAR(PyUnicode_AsUTF8(value)));\
+		arguments.attribute(UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(value)));\
 	}\
 }
 
@@ -419,7 +419,7 @@ ue_PySWidget *ue_py_get_swidget(TSharedRef<SWidget> s_widget);
 #define ue_py_slate_farguments_optional_text(param, attribute) { PyObject *value = ue_py_dict_get_item(kwargs, param);\
 	if (value) {\
 		if (PyUnicode_Check(value)) {\
-			arguments.attribute(FText::FromString(UTF8_TO_TCHAR(PyUnicode_AsUTF8(value))));\
+			arguments.attribute(FText::FromString(UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(value))));\
 		}\
 		else {\
 				PyErr_SetString(PyExc_TypeError, "unsupported type for attribute " param); \

@@ -636,7 +636,7 @@ FText FPythonSlateDelegate::GetterFText() const
 		return FText();
 	}
 
-	FText text = FText::FromString(PyUnicode_AsUTF8(str));
+	FText text = FText::FromString(UEPyUnicode_AsUTF8(str));
 	Py_DECREF(str);
 	Py_DECREF(ret);
 	return text;
@@ -660,7 +660,7 @@ FString FPythonSlateDelegate::GetterFString() const
 		return FString();
 	}
 
-	FString fstr = UTF8_TO_TCHAR(PyUnicode_AsUTF8(str));
+	FString fstr = UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(str));
 	Py_DECREF(str);
 	Py_DECREF(ret);
 	return fstr;

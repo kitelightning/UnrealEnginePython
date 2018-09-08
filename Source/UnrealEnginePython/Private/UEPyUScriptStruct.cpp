@@ -187,9 +187,9 @@ static PyObject *ue_PyUScriptStruct_getattro(ue_PyUScriptStruct *self, PyObject 
 	{
 		if (PyUnicodeOrString_Check(attr_name))
 		{
-			char *attr = PyUnicode_AsUTF8(attr_name);
+			const char *attr = UEPyUnicode_AsUTF8(attr_name);
 			// first check for property
-			UProperty *u_property = get_field_from_name(self->u_struct, attr);
+			UProperty *u_property = get_field_from_name(self->u_struct, (char *)attr);
 			if (u_property)
 			{
 				// swallow previous exception
@@ -206,9 +206,9 @@ static int ue_PyUScriptStruct_setattro(ue_PyUScriptStruct *self, PyObject *attr_
 	// first of all check for UProperty
 	if (PyUnicodeOrString_Check(attr_name))
 	{
-		char *attr = PyUnicode_AsUTF8(attr_name);
+		const char *attr = UEPyUnicode_AsUTF8(attr_name);
 		// first check for property
-		UProperty *u_property = get_field_from_name(self->u_struct, attr);
+		UProperty *u_property = get_field_from_name(self->u_struct, (char *)attr);
 		if (u_property)
 		{
 			if (ue_py_convert_pyobject(value, u_property, py_ue_uscriptstruct_get_data(self), 0))

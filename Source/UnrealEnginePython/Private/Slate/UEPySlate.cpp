@@ -121,7 +121,7 @@ FReply FPythonSlateDelegate::OnMouseEvent(const FGeometry &geometry, const FPoin
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"OO", py_ue_new_fgeometry(geometry), py_ue_new_fpointer_event(pointer_event));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"NN", py_ue_new_fgeometry(geometry), py_ue_new_fpointer_event(pointer_event));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -141,7 +141,7 @@ FReply FPythonSlateDelegate::OnKeyDown(const FGeometry &geometry, const FKeyEven
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"OO", py_ue_new_fgeometry(geometry), py_ue_new_fkey_event(key_event));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"NN", py_ue_new_fgeometry(geometry), py_ue_new_fkey_event(key_event));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -259,7 +259,7 @@ void FPythonSlateDelegate::OnLinearColorChanged(FLinearColor color)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_flinearcolor(color));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_flinearcolor(color));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -272,7 +272,7 @@ void FPythonSlateDelegate::OnWindowClosed(const TSharedRef<SWindow> &Window)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", (PyObject *)ue_py_get_swidget(Window));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_swidget<ue_PySWindow>(StaticCastSharedRef<SWidget>(Window), &ue_PySWindowType));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -398,7 +398,7 @@ void FPythonSlateDelegate::OnAssetDoubleClicked(const FAssetData& AssetData)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fassetdata(AssetData));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fassetdata(AssetData));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -410,7 +410,7 @@ void FPythonSlateDelegate::OnAssetSelected(const FAssetData& AssetData)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fassetdata(AssetData));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fassetdata(AssetData));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -422,7 +422,7 @@ void FPythonSlateDelegate::OnAssetChanged(const FAssetData& AssetData)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fassetdata(AssetData));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fassetdata(AssetData));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -434,7 +434,7 @@ bool FPythonSlateDelegate::OnShouldFilterAsset(const FAssetData& AssetData)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fassetdata(AssetData));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fassetdata(AssetData));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -486,7 +486,7 @@ void FPythonSlateDelegate::MenuPyAssetBuilder(FMenuBuilder &Builder, TArray<FAss
 		PyList_Append(py_list, py_ue_new_fassetdata(asset));
 	}
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"OO", py_ue_new_fmenu_builder(Builder), py_list);
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"NO", py_ue_new_fmenu_builder(Builder), py_list);
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -1119,7 +1119,7 @@ public:
 	void MenuPyBuilder(FMenuBuilder &Builder)
 	{
 		FScopePythonGIL gil;
-		PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fmenu_builder(Builder));
+		PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fmenu_builder(Builder));
 		if (!ret)
 		{
 			unreal_engine_py_log_error();
@@ -1137,7 +1137,7 @@ public:
 	void ToolBarBuilder(FToolBarBuilder &Builder)
 	{
 		FScopePythonGIL gil;
-		PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_ftool_bar_builder(Builder));
+		PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_ftool_bar_builder(Builder));
 		if (!ret)
 		{
 			unreal_engine_py_log_error();

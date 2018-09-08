@@ -7,6 +7,7 @@
 #include "Slate/UEPySlateDelegate.h"
 #include "Runtime/CoreUObject/Public/UObject/GCObject.h"
 #include "PythonDelegate.h"
+#include "PythonSmartDelegate.h"
 
 class FUnrealEnginePythonHouseKeeper : public FGCObject
 {
@@ -257,6 +258,16 @@ public:
 		return Delegate;
 	}
 
+	TSharedRef<FPythonSmartDelegate> NewPythonSmartDelegate(PyObject *PyCallable)
+	{
+		TSharedRef<FPythonSmartDelegate> Delegate = MakeShareable(new FPythonSmartDelegate());
+		Delegate->SetPyCallable(PyCallable);
+
+		PyStaticSmartDelegatesTracker.Add(Delegate);
+
+		return Delegate;
+	}
+
 	void TrackDeferredSlateDelegate(TSharedRef<FPythonSlateDelegate> Delegate, TSharedRef<SWidget> Owner)
 	{
 		FPythonSWidgetDelegateTracker Tracker(Delegate, Owner);
@@ -292,6 +303,8 @@ private:
 
     //TODO: ikrimae: #ThirdParty-Python: #BUG: This implementation memory leaks. These delegates never get cleaned up
 	TArray<TSharedRef<FPythonSlateDelegate>> PyStaticSlateDelegatesTracker;
+
+	TArray<TSharedRef<FPythonSmartDelegate>> PyStaticSmartDelegatesTracker;
 
 	TArray<UObject *> PythonTrackedObjects;
 };

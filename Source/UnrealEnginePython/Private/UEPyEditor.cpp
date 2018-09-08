@@ -8,7 +8,7 @@
 #include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Editor/ContentBrowser/Public/ContentBrowserModule.h"
-
+#include "Editor/UnrealEd/Public/PackageTools.h"
 #include "UnrealEd.h"
 #include "FbxMeshUtils.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -760,10 +760,39 @@ PyObject *py_unreal_engine_find_asset(PyObject * self, PyObject * args)
 	FAssetData asset = AssetRegistryModule.Get().GetAssetByObjectPath(UTF8_TO_TCHAR(path));
 	if (!asset.IsValid())
 	{
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	Py_RETURN_UOBJECT(asset.GetAsset());
+}
+
+PyObject *py_unreal_engine_create_asset(PyObject * self, PyObject * args)
+{
+	char *asset_name;
+	char *package_path;
+	PyObject *py_class;
+	PyObject *py_factory;
+
+	if (!PyArg_ParseTuple(args, "ssOO:create_asset", &asset_name, &package_path, &py_class, &py_factory))
+	{
+		return nullptr;
+	}
+
+	if (!GEditor)
+		return PyErr_Format(PyExc_Exception, "no GEditor found");
+
+	UClass *uclass = ue_py_check_type<UClass>(py_class);
+	if (!uclass)
+		return PyErr_Format(PyExc_Exception, "argument is not a UClass");
+
+	UFactory *factory = ue_py_check_type<UFactory>(py_factory);
+	if (!factory)
+		return PyErr_Format(PyExc_Exception, "argument is not a UFactory");
+
+	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	UObject *uobject = AssetToolsModule.Get().CreateAsset(FString(UTF8_TO_TCHAR(asset_name)), FString(UTF8_TO_TCHAR(package_path)), uclass, factory);
+	if (!uobject)
+		return PyErr_Format(PyExc_Exception, "unable to create asset");
+	Py_RETURN_UOBJECT(uobject);
 }
 
 PyObject *py_unreal_engine_get_asset_referencers(PyObject * self, PyObject * args)
@@ -1375,6 +1404,11 @@ PyObject *py_unreal_engine_create_blueprint(PyObject * self, PyObject * args)
 	if (!outer)
 		return PyErr_Format(PyExc_Exception, "unable to create package");
 
+	TArray<UPackage *> TopLevelPackages;
+	TopLevelPackages.Add(outer);
+	if (!PackageTools::HandleFullyLoadingPackages(TopLevelPackages, FText::FromString("Create a new object")))
+		return PyErr_Format(PyExc_Exception, "unable to fully load package");
+
 	if (FindObject<UBlueprint>(outer, UTF8_TO_TCHAR(bp_name)) != nullptr)
 		return PyErr_Format(PyExc_Exception, "there is already a Blueprint with this name");
 
@@ -1962,10 +1996,8 @@ PyObject *py_unreal_engine_editor_on_asset_post_import(PyObject * self, PyObject
 	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "object is not a callable");
 
-	// will brutally leak
-	FPythonSmartDelegate *py_delegate = new FPythonSmartDelegate();
-	py_delegate->SetPyCallable(py_callable);
-	FEditorDelegates::OnAssetPostImport.AddRaw(py_delegate, &FPythonSmartDelegate::PyFOnAssetPostImport);
+	TSharedRef<FPythonSmartDelegate> py_delegate = FUnrealEnginePythonHouseKeeper::Get()->NewPythonSmartDelegate(py_callable);
+	FEditorDelegates::OnAssetPostImport.AddSP(py_delegate, &FPythonSmartDelegate::PyFOnAssetPostImport);
 	Py_RETURN_NONE;
 }
 
@@ -1979,12 +2011,17 @@ PyObject *py_unreal_engine_on_main_frame_creation_finished(PyObject * self, PyOb
 
 	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "object is not a callable");
+	/*
+	TSharedRef<FPythonSmartDelegate> py_delegate = FUnrealEnginePythonHouseKeeper::Get()->NewPythonSmartDelegate(py_callable);
+	IMainFrameModule& MainFrameModule = FModuleManager::LoadModuleChecked<IMainFrameModule>(TEXT("MainFrame"));
+	MainFrameModule.OnMainFrameCreationFinished().AddSP(py_delegate, &FPythonSmartDelegate::PyFOnMainFrameCreationFinished);
+	*/
 
-	// will brutally leak
 	FPythonSmartDelegate *py_delegate = new FPythonSmartDelegate();
 	py_delegate->SetPyCallable(py_callable);
 	IMainFrameModule& MainFrameModule = FModuleManager::LoadModuleChecked<IMainFrameModule>(TEXT("MainFrame"));
 	MainFrameModule.OnMainFrameCreationFinished().AddRaw(py_delegate, &FPythonSmartDelegate::PyFOnMainFrameCreationFinished);
+	
 	Py_RETURN_NONE;
 }
 
@@ -2054,17 +2091,24 @@ PyObject *py_ue_factory_create_new(ue_PyUObject *self, PyObject * args)
 	if (!factory)
 		return PyErr_Format(PyExc_Exception, "uobject is not a Factory");
 
-	UPackage *outer = CreatePackage(nullptr, UTF8_TO_TCHAR(name));
-	if (!outer)
-		return PyErr_Format(PyExc_Exception, "unable to create package");
-
-	UClass *u_class = factory->GetSupportedClass();
-
 	char *obj_name = strrchr(name, '/') + 1;
 	if (strlen(obj_name) < 1)
 	{
 		return PyErr_Format(PyExc_Exception, "invalid object name");
 	}
+
+	FString PackageName = PackageTools::SanitizePackageName(FString(UTF8_TO_TCHAR(name)) + TEXT("/") + FString(UTF8_TO_TCHAR(obj_name)));
+
+	UPackage *outer = CreatePackage(nullptr, *PackageName);
+	if (!outer)
+		return PyErr_Format(PyExc_Exception, "unable to create package");
+
+	TArray<UPackage *> TopLevelPackages;
+	TopLevelPackages.Add(outer);
+	if (!PackageTools::HandleFullyLoadingPackages(TopLevelPackages, FText::FromString("Create a new object")))
+		return PyErr_Format(PyExc_Exception, "unable to fully load package");
+
+	UClass *u_class = factory->GetSupportedClass();
 
 	// avoid duplicates
 	if (u_class->IsChildOf<UBlueprint>())

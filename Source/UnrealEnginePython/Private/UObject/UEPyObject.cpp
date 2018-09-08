@@ -1562,7 +1562,7 @@ PyObject *py_ue_set_property_flags(ue_PyUObject *self, PyObject * args)
 	else
 	{
 		u_struct = (UStruct *)self->ue_object->GetClass();
-}
+	}
 
 	UProperty *u_property = u_struct->FindPropertyByName(FName(UTF8_TO_TCHAR(property_name)));
 	if (!u_property)
@@ -1610,7 +1610,7 @@ PyObject *py_ue_add_property_flags(ue_PyUObject *self, PyObject * args)
 	u_property->SetPropertyFlags(u_property->GetPropertyFlags() | (EPropertyFlags)flags);
 #endif
 	Py_RETURN_NONE;
-	}
+}
 
 PyObject *py_ue_get_property_flags(ue_PyUObject *self, PyObject * args)
 {
@@ -2492,7 +2492,7 @@ PyObject *py_ue_add_property(ue_PyUObject * self, PyObject * args)
 			if (is_array || is_map)
 				scope->MarkPendingKill();
 			return PyErr_Format(PyExc_Exception, "unable to allocate new UProperty");
-	}
+		}
 		UMapProperty *u_map = (UMapProperty *)scope;
 
 #if ENGINE_MINOR_VERSION < 20
@@ -2541,7 +2541,7 @@ PyObject *py_ue_add_property(ue_PyUObject * self, PyObject * args)
 		u_map->ValueProp = u_property2;
 
 		u_property = u_map;
-}
+	}
 #endif
 
 	if (u_class == UMulticastDelegateProperty::StaticClass())

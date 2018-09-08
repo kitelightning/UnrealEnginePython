@@ -345,6 +345,7 @@ static PyMethodDef unreal_engine_methods[] = {
 	{ "export_assets", py_unreal_engine_export_assets, METH_VARARGS, "" },
 	{ "get_asset", py_unreal_engine_get_asset, METH_VARARGS, "" },
 	{ "find_asset", py_unreal_engine_find_asset, METH_VARARGS, "" },
+	{ "create_asset", py_unreal_engine_create_asset, METH_VARARGS, "" },
 	{ "delete_object", py_unreal_engine_delete_object, METH_VARARGS, "" },
 	{ "get_assets", py_unreal_engine_get_assets, METH_VARARGS, "" },
 	{ "get_all_assets", py_unreal_engine_get_all_assets, METH_VARARGS, "" },
@@ -663,6 +664,7 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "set_actor_label", (PyCFunction)py_ue_set_actor_label, METH_VARARGS, "" },
 
 	{ "get_editor_world_counterpart_actor", (PyCFunction)py_ue_get_editor_world_counterpart_actor, METH_VARARGS, "" },
+	{ "component_type_registry_invalidate_class", (PyCFunction)py_ue_component_type_registry_invalidate_class, METH_VARARGS, "" },
 
 	{ "find_actor_by_label", (PyCFunction)py_ue_find_actor_by_label, METH_VARARGS, "" },
 	{ "save_package", (PyCFunction)py_ue_save_package, METH_VARARGS, "" },
@@ -1149,6 +1151,7 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "set_material", (PyCFunction)py_ue_set_material, METH_VARARGS, "" },
 	{ "set_material_by_name", (PyCFunction)py_ue_set_material_by_name, METH_VARARGS, "" },
 	{ "set_material_scalar_parameter", (PyCFunction)py_ue_set_material_scalar_parameter, METH_VARARGS, "" },
+	{ "set_material_static_switch_parameter", (PyCFunction)py_ue_set_material_static_switch_parameter, METH_VARARGS, "" },
 	{ "set_material_vector_parameter", (PyCFunction)py_ue_set_material_vector_parameter, METH_VARARGS, "" },
 	{ "set_material_texture_parameter", (PyCFunction)py_ue_set_material_texture_parameter, METH_VARARGS, "" },
 	{ "get_material_instruction_count", (PyCFunction)py_ue_get_material_instruction_count, METH_VARARGS, "" },

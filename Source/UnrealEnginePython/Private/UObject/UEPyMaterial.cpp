@@ -131,6 +131,7 @@ PyObject *py_ue_set_material(ue_PyUObject *self, PyObject * args)
 		return PyErr_Format(PyExc_Exception, "argument is not a UMaterialInterface");
 
 #if ENGINE_MINOR_VERSION >= 20
+#if WITH_EDITOR
 	UStaticMesh *mesh = ue_py_check_type<UStaticMesh>(self);
 	if (mesh)
 	{
@@ -138,12 +139,13 @@ PyObject *py_ue_set_material(ue_PyUObject *self, PyObject * args)
 		Py_RETURN_NONE;
 	}
 #endif
+#endif
 
 	UPrimitiveComponent *primitive = ue_py_check_type<UPrimitiveComponent>(self);
 	if (!primitive)
 		return PyErr_Format(PyExc_Exception, "uobject is not a UPrimitiveComponent");
 
-	
+
 	primitive->SetMaterial(slot, material);
 
 	Py_RETURN_NONE;
@@ -202,7 +204,7 @@ PyObject *py_ue_set_material_static_switch_parameter(ue_PyUObject *self, PyObjec
 		return NULL;
 	}
 
-	FName parameterName(UTF8_TO_TCHAR(switchName));	
+	FName parameterName(UTF8_TO_TCHAR(switchName));
 
 	bool switchValue = false;
 	if (PyObject_IsTrue(py_bool))
@@ -222,7 +224,11 @@ PyObject *py_ue_set_material_static_switch_parameter(ue_PyUObject *self, PyObjec
 		bool isExisting = false;
 		for (auto& parameter : staticParameterSet.StaticSwitchParameters)
 		{
+#if ENGINE_MINOR_VERSION < 19
+			if (parameter.bOverride && parameter.ParameterName == parameterName)
+#else
 			if (parameter.bOverride && parameter.ParameterInfo.Name == parameterName)
+#endif
 			{
 				parameter.Value = switchValue;
 				isExisting = true;
@@ -233,7 +239,11 @@ PyObject *py_ue_set_material_static_switch_parameter(ue_PyUObject *self, PyObjec
 		if (!isExisting)
 		{
 			FStaticSwitchParameter SwitchParameter;
+#if ENGINE_MINOR_VERSION < 19
+			SwitchParameter.ParameterName = parameterName;
+#else
 			SwitchParameter.ParameterInfo.Name = parameterName;
+#endif
 			SwitchParameter.Value = switchValue;
 
 			SwitchParameter.bOverride = true;

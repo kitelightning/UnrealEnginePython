@@ -33,6 +33,78 @@ static PyObject *py_ue_ftransform_get_relative_transform(ue_PyFTransform *self, 
 	return py_ue_new_ftransform(py_ue_ftransform_get(self).GetRelativeTransform(py_ue_ftransform_get(py_transform)));
 }
 
+static PyObject *py_ue_ftransform_transform_vector(ue_PyFTransform *self, PyObject * args)
+{
+	PyObject *py_obj;
+	if (!PyArg_ParseTuple(args, "O", &py_obj))
+	{
+		return nullptr;
+	}
+
+	ue_PyFVector *py_vec = py_ue_is_fvector(py_obj);
+	if (!py_vec)
+		return PyErr_Format(PyExc_Exception, "argument is not a FVector");
+	return py_ue_new_fvector(self->transform.TransformVector(py_vec->vec));
+}
+
+static PyObject *py_ue_ftransform_transform_vector_no_scale(ue_PyFTransform *self, PyObject * args)
+{
+	PyObject *py_obj;
+	if (!PyArg_ParseTuple(args, "O", &py_obj))
+	{
+		return nullptr;
+	}
+
+	ue_PyFVector *py_vec = py_ue_is_fvector(py_obj);
+	if (!py_vec)
+		return PyErr_Format(PyExc_Exception, "argument is not a FVector");
+	return py_ue_new_fvector(self->transform.TransformVectorNoScale(py_vec->vec));
+}
+
+static PyObject *py_ue_ftransform_transform_position(ue_PyFTransform *self, PyObject * args)
+{
+	PyObject *py_obj;
+	if (!PyArg_ParseTuple(args, "O", &py_obj))
+	{
+		return nullptr;
+	}
+
+	ue_PyFVector *py_vec = py_ue_is_fvector(py_obj);
+	if (!py_vec)
+		return PyErr_Format(PyExc_Exception, "argument is not a FVector");
+	return py_ue_new_fvector(self->transform.TransformPosition(py_vec->vec));
+}
+
+static PyObject *py_ue_ftransform_transform_position_no_scale(ue_PyFTransform *self, PyObject * args)
+{
+	PyObject *py_obj;
+	if (!PyArg_ParseTuple(args, "O", &py_obj))
+	{
+		return nullptr;
+	}
+
+	ue_PyFVector *py_vec = py_ue_is_fvector(py_obj);
+	if (!py_vec)
+		return PyErr_Format(PyExc_Exception, "argument is not a FVector");
+	return py_ue_new_fvector(self->transform.TransformPositionNoScale(py_vec->vec));
+}
+
+#if ENGINE_MINOR_VERSION > 17
+static PyObject *py_ue_ftransform_transform_rotation(ue_PyFTransform *self, PyObject * args)
+{
+	PyObject *py_obj;
+	if (!PyArg_ParseTuple(args, "O", &py_obj))
+	{
+		return nullptr;
+	}
+
+	ue_PyFQuat *py_quat = py_ue_is_fquat(py_obj);
+	if (!py_quat)
+		return PyErr_Format(PyExc_Exception, "argument is not a FQuat");
+	return py_ue_new_fquat(self->transform.TransformRotation(py_quat->quat));
+}
+#endif
+
 static PyObject *py_ue_ftransform_get_matrix(ue_PyFTransform *self, PyObject * args)
 {
 	FTransform transform = py_ue_ftransform_get(self);
@@ -51,6 +123,13 @@ static PyMethodDef ue_PyFTransform_methods[] = {
 	{ "get_relative_transform", (PyCFunction)py_ue_ftransform_get_relative_transform, METH_VARARGS, "" },
 	{ "normalize_rotation", (PyCFunction)py_ue_ftransform_normalize_rotation, METH_VARARGS, "" },
 	{ "get_matrix", (PyCFunction)py_ue_ftransform_get_matrix, METH_VARARGS, "" },
+	{ "transform_vector", (PyCFunction)py_ue_ftransform_transform_vector, METH_VARARGS, "" },
+	{ "transform_vector_no_scale", (PyCFunction)py_ue_ftransform_transform_vector_no_scale, METH_VARARGS, "" },
+	{ "transform_position", (PyCFunction)py_ue_ftransform_transform_position, METH_VARARGS, "" },
+	{ "transform_position_no_scale", (PyCFunction)py_ue_ftransform_transform_position_no_scale, METH_VARARGS, "" },
+#if ENGINE_MINOR_VERSION > 17
+	{ "transform_rotation", (PyCFunction)py_ue_ftransform_transform_rotation, METH_VARARGS, "" },
+#endif
 	{ NULL }  /* Sentinel */
 };
 

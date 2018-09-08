@@ -684,8 +684,7 @@ PyObject *py_ue_find_function(ue_PyUObject * self, PyObject * args)
 	UFunction *function = self->ue_object->FindFunction(FName(UTF8_TO_TCHAR(name)));
 	if (!function)
 	{
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 
 	Py_RETURN_UOBJECT((UObject *)function);
@@ -1973,6 +1972,54 @@ PyObject *py_ue_get_uproperty(ue_PyUObject *self, PyObject * args)
 
 }
 
+PyObject *py_ue_get_inner(ue_PyUObject *self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	UArrayProperty *u_property = ue_py_check_type<UArrayProperty>(self);
+	if (!u_property)
+		return PyErr_Format(PyExc_Exception, "object is not a UArrayProperty");
+
+	UProperty* inner = u_property->Inner;
+	if (!inner)
+		Py_RETURN_NONE;
+
+	Py_RETURN_UOBJECT(inner);
+}
+
+PyObject *py_ue_get_key_prop(ue_PyUObject *self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	UMapProperty *u_property = ue_py_check_type<UMapProperty>(self);
+	if (!u_property)
+		return PyErr_Format(PyExc_Exception, "object is not a UMapProperty");
+
+	UProperty* key = u_property->KeyProp;
+	if (!key)
+		Py_RETURN_NONE;
+
+	Py_RETURN_UOBJECT(key);
+}
+
+PyObject *py_ue_get_value_prop(ue_PyUObject *self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	UMapProperty *u_property = ue_py_check_type<UMapProperty>(self);
+	if (!u_property)
+		return PyErr_Format(PyExc_Exception, "object is not a UMapProperty");
+
+	UProperty* value = u_property->ValueProp;
+	if (!value)
+		Py_RETURN_NONE;
+
+	Py_RETURN_UOBJECT(value);
+}
+
 PyObject *py_ue_has_property(ue_PyUObject *self, PyObject * args)
 {
 
@@ -2748,6 +2795,8 @@ PyObject *py_ue_save_package(ue_PyUObject * self, PyObject * args)
 		has_package = true;
 	}
 
+	bool bIsMap = u_object->IsA<UWorld>();
+
 	if (!package || name)
 	{
 		if (!name)
@@ -2760,18 +2809,14 @@ PyObject *py_ue_save_package(ue_PyUObject * self, PyObject * args)
 			if (u_object->HasAnyFlags(RF_Transient))
 			{
 				u_object->ClearFlags(RF_Transient);
-				u_object->SetFlags(RF_Public | RF_Standalone);
 			}
 		}
-		package = (UPackage *)StaticFindObject(nullptr, ANY_PACKAGE, UTF8_TO_TCHAR(name), true);
 		// create a new package if it does not exist
-		if (!package)
-		{
-			package = CreatePackage(nullptr, UTF8_TO_TCHAR(name));
-		}
+		package = CreatePackage(nullptr, UTF8_TO_TCHAR(name));
 		if (!package)
 			return PyErr_Format(PyExc_Exception, "unable to create package");
-		package->FileName = *FPackageName::LongPackageNameToFilename(UTF8_TO_TCHAR(name), FPackageName::GetAssetPackageExtension());
+		
+		package->FileName = *FPackageName::LongPackageNameToFilename(UTF8_TO_TCHAR(name), bIsMap ? FPackageName::GetMapPackageExtension() : FPackageName::GetAssetPackageExtension());
 		if (has_package)
 		{
 			FString split_path;
@@ -2795,22 +2840,25 @@ PyObject *py_ue_save_package(ue_PyUObject * self, PyObject * args)
 		}
 	}
 
+	// ensure the right flags are applied
+	u_object->SetFlags(RF_Public | RF_Standalone);
+
 	package->FullyLoad();
 	package->MarkPackageDirty();
 
 	if (package->FileName.IsNone())
 	{
-		package->FileName = *FPackageName::LongPackageNameToFilename(*package->GetPathName(), FPackageName::GetAssetPackageExtension());
+		package->FileName = *FPackageName::LongPackageNameToFilename(*package->GetPathName(), bIsMap ? FPackageName::GetMapPackageExtension() : FPackageName::GetAssetPackageExtension());
 		UE_LOG(LogPython, Warning, TEXT("no file mapped to UPackage %s, setting its FileName to %s"), *package->GetPathName(), *package->FileName.ToString());
 	}
 
 	// NOTE: FileName may not be a fully qualified filepath
 	if (FPackageName::IsValidLongPackageName(package->FileName.ToString()))
 	{
-		package->FileName = *FPackageName::LongPackageNameToFilename(package->GetPathName(), FPackageName::GetAssetPackageExtension());
+		package->FileName = *FPackageName::LongPackageNameToFilename(package->GetPathName(), bIsMap ? FPackageName::GetMapPackageExtension() : FPackageName::GetAssetPackageExtension());
 	}
 
-	if (UPackage::SavePackage(package, u_object, RF_Public | RF_Standalone, *package->FileName.ToString()))
+	if (UPackage::SavePackage(package, u_object, RF_NoFlags, *package->FileName.ToString()))
 	{
 		FAssetRegistryModule::AssetCreated(u_object);
 		Py_RETURN_UOBJECT(u_object);

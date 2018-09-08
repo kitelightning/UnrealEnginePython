@@ -226,6 +226,22 @@ static PyObject *py_unreal_engine_shutdown(PyObject *self, PyObject * args)
 	Py_RETURN_NONE;
 }
 
+static PyObject *py_unreal_engine_set_brutal_finalize(PyObject *self, PyObject * args)
+{
+
+	PyObject *py_bool = nullptr;
+	if (!PyArg_ParseTuple(args, "|O:set_brutal_finalize", &py_bool))
+	{
+		return nullptr;
+	}
+
+	bool bBrutalFinalize = !py_bool || PyObject_IsTrue(py_bool);
+
+	FUnrealEnginePythonModule &PythonModule = FModuleManager::GetModuleChecked<FUnrealEnginePythonModule>("UnrealEnginePython");
+	PythonModule.BrutalFinalize = bBrutalFinalize;
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef unreal_engine_methods[] = {
 	{ "log", py_unreal_engine_log, METH_VARARGS, "" },
 	{ "log_warning", py_unreal_engine_log_warning, METH_VARARGS, "" },
@@ -236,6 +252,7 @@ static PyMethodDef unreal_engine_methods[] = {
     { "is_running_commandlet", py_unreal_engine_is_running_commandlet, METH_VARARGS, "" },
     { "is_running_dedicated_server", py_unreal_engine_is_running_dedicated_server, METH_VARARGS, "" },
 	{ "shutdown", py_unreal_engine_shutdown, METH_VARARGS, "" },
+	{ "set_brutal_finalize", py_unreal_engine_set_brutal_finalize, METH_VARARGS, "" },
 
 	{ "add_on_screen_debug_message", py_unreal_engine_add_on_screen_debug_message, METH_VARARGS, "" },
 	{ "print_string", py_unreal_engine_print_string, METH_VARARGS, "" },
@@ -597,6 +614,9 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "get_property_struct", (PyCFunction)py_ue_get_property_struct, METH_VARARGS, "" },
 	{ "output_referencers", (PyCFunction)py_ue_output_referencers, METH_VARARGS, "" },
 	{ "get_property_array_dim", (PyCFunction)py_ue_get_property_array_dim, METH_VARARGS, "" },
+	{ "get_inner", (PyCFunction)py_ue_get_inner, METH_VARARGS, "" },
+	{ "get_key_prop", (PyCFunction)py_ue_get_key_prop, METH_VARARGS, "" },
+	{ "get_value_prop", (PyCFunction)py_ue_get_value_prop, METH_VARARGS, "" },
 
 	{ "functions", (PyCFunction)py_ue_functions, METH_VARARGS, "" },
 
@@ -662,6 +682,15 @@ static PyMethodDef ue_PyUObject_methods[] = {
     { "set_folder_path", (PyCFunction)py_ue_actor_set_folder_path, METH_VARARGS, "" },
 	{ "get_actor_label", (PyCFunction)py_ue_get_actor_label, METH_VARARGS, "" },
 	{ "set_actor_label", (PyCFunction)py_ue_set_actor_label, METH_VARARGS, "" },
+	{ "set_actor_hidden_in_game", (PyCFunction)py_ue_set_actor_hidden_in_game, METH_VARARGS, "" },
+
+	{ "get_folder_path", (PyCFunction)py_ue_get_folder_path, METH_VARARGS, "" },
+	{ "set_folder_path", (PyCFunction)py_ue_set_folder_path, METH_VARARGS, "" },
+
+	{ "world_create_folder", (PyCFunction)py_ue_world_create_folder, METH_VARARGS, "" },
+	{ "world_delete_folder", (PyCFunction)py_ue_world_delete_folder, METH_VARARGS, "" },
+	{ "world_rename_folder", (PyCFunction)py_ue_world_rename_folder, METH_VARARGS, "" },
+	{ "world_folders", (PyCFunction)py_ue_world_folders, METH_VARARGS, "" },
 
 	{ "get_editor_world_counterpart_actor", (PyCFunction)py_ue_get_editor_world_counterpart_actor, METH_VARARGS, "" },
 	{ "component_type_registry_invalidate_class", (PyCFunction)py_ue_component_type_registry_invalidate_class, METH_VARARGS, "" },
@@ -1411,15 +1440,12 @@ static PyObject *ue_PyUObject_call(ue_PyUObject *self, PyObject *args, PyObject 
             PyTuple_SetItem(py_args, 3, PyLong_FromLongLong(flags));
 		}
 		ue_PyUObject *ret = (ue_PyUObject *)py_unreal_engine_new_object(nullptr, py_args);
+		Py_DECREF(py_args);
 		if (!ret)
 		{
-			Py_DECREF(py_args);
 			return NULL;
 		}
-		// when new_object is called the reference counting is 2
-		Py_DECREF(ret);
-		ret->owned = 1;
-
+		// when new_object is called the reference counting is 2 and is registered in the GC
 		// UObject crated explicitely from python, will be managed by python...
 		FUnrealEnginePythonHouseKeeper::Get()->TrackUObject(ret->ue_object);
 

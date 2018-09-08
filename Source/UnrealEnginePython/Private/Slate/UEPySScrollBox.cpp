@@ -10,6 +10,7 @@ static PyObject *py_ue_sscroll_box_add_slot(ue_PySScrollBox *self, PyObject * ar
 		ue_py_slate_setup_hack_slot_args(SScrollBox, py_SScrollBox);
 		ue_py_slate_farguments_optional_enum("h_align", HAlign, EHorizontalAlignment);
 		ue_py_slate_farguments_optional_enum("v_align", VAlign, EVerticalAlignment);
+        ue_py_slate_track_delegates(py_SScrollBox);
 		return 0;
 	}();
 

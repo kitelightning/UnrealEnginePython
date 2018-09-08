@@ -214,7 +214,7 @@ public:
 		{  return Super::OnMouseButtonDoubleClick(MyGeometry, MyEvent); }
 
 		PyObject *py_callable_on_mouse_button_double_click = PyObject_GetAttrString(self, (char *)"on_mouse_button_double_click");
-		if (!PyCalllable_Check_Extended(py_callable_on_mouse_button_double_click))
+		if (!PyCallable_Check(py_callable_on_mouse_button_double_click))
 		{
 			UE_LOG(LogPython, Error, TEXT("on_mouse_button_double_click is not a callable"));
 			return FReply::Unhandled();

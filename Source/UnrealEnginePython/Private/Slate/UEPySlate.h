@@ -88,9 +88,9 @@ template<typename T> ue_PySWidget *py_ue_new_swidget(TSharedRef<SWidget> s_widge
 }
 
 #define ue_py_slate_track_delegates(_swidget_ref) \
-				for(TSharedRef<FPythonSlateDelegate> Delegate : DeferredSlateDelegates)\
+				for(TSharedRef<FPythonSlateDelegate>& Delegate : DeferredSlateDelegates)\
 				{\
-		FUnrealEnginePythonHouseKeeper::Get()->TrackDeferredSlateDelegate(Delegate, _swidget_ref);\
+		FUnrealEnginePythonHouseKeeper::Get()->TrackDeferredSlateDelegate(Delegate, StaticCastSharedRef<SWidget>(_swidget_ref));\
 				}
 
 #define ue_py_snew_base(T, required, arguments) ((ue_PySWidget *)self)->Widget = TSharedRef<T>(MakeTDecl<T>(#T, __FILE__, __LINE__, required) <<= arguments);\

@@ -377,45 +377,49 @@ void ue_python_init_uscriptstruct(PyObject *ue_module)
 	PyModule_AddObject(ue_module, "UScriptStruct", (PyObject *)&ue_PyUScriptStructType);
 }
 
+// NOTE: This should really be renamed to signify it's just a pointer wrapper that doesn't own the memory it's pointing to
 PyObject *py_ue_new_uscriptstruct(UScriptStruct *u_struct, uint8 *data)
 {
 	ue_PyUScriptStruct *ret = (ue_PyUScriptStruct *)PyObject_New(ue_PyUScriptStruct, &ue_PyUScriptStructType);
-	ret->u_struct = u_struct;
-	ret->u_struct_ptr = data;
-	ret->u_struct_owned = 0;
+	ret->u_struct           = u_struct;
+	ret->u_struct_ptr       = data;
+	ret->u_struct_owned     = 0;
 	return (PyObject *)ret;
 }
 
+// NOTE: This should really be renamed to clone
 PyObject *py_ue_new_owned_uscriptstruct(UScriptStruct *u_struct, uint8 *data)
 {
-	ue_PyUScriptStruct *ret = (ue_PyUScriptStruct *)PyObject_New(ue_PyUScriptStruct, &ue_PyUScriptStructType);
-	ret->u_struct = u_struct;
-	uint8 *struct_data = (uint8*)FMemory::Malloc(u_struct->GetStructureSize());
-	ret->u_struct->InitializeStruct(struct_data);
-	ret->u_struct->CopyScriptStruct(struct_data, data);
-	ret->u_struct_ptr = struct_data;
-	ret->u_struct_owned = 1;
+    ue_PyUScriptStruct *ret = (ue_PyUScriptStruct *)PyObject_New(ue_PyUScriptStruct, &ue_PyUScriptStructType);
+    ret->u_struct = u_struct;
+    uint8 *struct_data = (uint8*)FMemory::Malloc(u_struct->GetStructureSize());
+    ret->u_struct->InitializeStruct(struct_data);
+    ret->u_struct->CopyScriptStruct(struct_data, data);
+    ret->u_struct_ptr = struct_data;
+    ret->u_struct_owned = 1;
 	return (PyObject *)ret;
 }
 
+// NOTE: This should really be renamed to steal ownership
 PyObject *py_ue_new_owned_uscriptstruct_zero_copy(UScriptStruct *u_struct, uint8 *data)
 {
-	ue_PyUScriptStruct *ret = (ue_PyUScriptStruct *)PyObject_New(ue_PyUScriptStruct, &ue_PyUScriptStructType);
-	ret->u_struct = u_struct;
-	ret->u_struct_ptr = data;
-	ret->u_struct_owned = 1;
+    ue_PyUScriptStruct *ret = (ue_PyUScriptStruct *)PyObject_New(ue_PyUScriptStruct, &ue_PyUScriptStructType);
+    ret->u_struct = u_struct;
+    ret->u_struct_ptr = data;
+    ret->u_struct_owned = 1;
 	return (PyObject *)ret;
 }
 
+// NOTE: Equivalent to py_ue_new_uscriptstruct() but exposed to python scripts
 static PyObject *py_ue_uscriptstruct_clone(ue_PyUScriptStruct *self, PyObject * args)
 {
 	ue_PyUScriptStruct *ret = (ue_PyUScriptStruct *)PyObject_New(ue_PyUScriptStruct, &ue_PyUScriptStructType);
-	ret->u_struct = self->u_struct;
-	uint8 *struct_data = (uint8*)FMemory::Malloc(self->u_struct->GetStructureSize());
+	ret->u_struct           = self->u_struct;
+	uint8 *struct_data      = (uint8*)FMemory::Malloc(self->u_struct->GetStructureSize());
 	ret->u_struct->InitializeStruct(struct_data);
 	ret->u_struct->CopyScriptStruct(struct_data, self->u_struct_ptr);
-	ret->u_struct_ptr = struct_data;
-	ret->u_struct_owned = 1;
+	ret->u_struct_ptr       = struct_data;
+	ret->u_struct_owned     = 1;
 	return (PyObject *)ret;
 }
 

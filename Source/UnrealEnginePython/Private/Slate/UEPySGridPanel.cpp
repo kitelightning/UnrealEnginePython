@@ -33,6 +33,7 @@ static PyObject *py_ue_sgrid_panel_add_slot(ue_PySGridPanel *self, PyObject * ar
 		ue_py_slate_farguments_optional_int32("column_span", ColumnSpan);
 		ue_py_slate_farguments_optional_fvector2d("nudge", Nudge);
 		ue_py_slate_farguments_optional_int32("row_span", RowSpan);
+        ue_py_slate_track_delegates(py_SGridPanel);
 		return 0;
 	}();
 

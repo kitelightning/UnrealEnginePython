@@ -46,7 +46,7 @@ class FUnrealEnginePythonHouseKeeper : public FGCObject
 		TWeakPtr<SWidget> Owner;
 		TSharedPtr<FPythonSlateDelegate> Delegate;
 
-		FPythonSWidgetDelegateTracker(TSharedRef<FPythonSlateDelegate> DelegateToTrack, TSharedRef<SWidget> DelegateOwner) : Owner(DelegateOwner), Delegate(DelegateToTrack)
+		FPythonSWidgetDelegateTracker(const TSharedRef<FPythonSlateDelegate>& DelegateToTrack, const TSharedRef<SWidget>& DelegateOwner) : Owner(DelegateOwner), Delegate(DelegateToTrack)
 		{
 		}
 
@@ -281,7 +281,7 @@ public:
 		return Delegate;
 	}
 
-	void TrackDeferredSlateDelegate(TSharedRef<FPythonSlateDelegate> Delegate, TSharedRef<SWidget> Owner)
+	void TrackDeferredSlateDelegate(const TSharedRef<FPythonSlateDelegate>& Delegate, const TSharedRef<SWidget>& Owner)
 	{
 		FPythonSWidgetDelegateTracker Tracker(Delegate, Owner);
 		PySlateDelegatesTracker.Add(Tracker);

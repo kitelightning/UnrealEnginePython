@@ -38,12 +38,12 @@ static PyObject *py_ue_fmenu_builder_add_menu_entry(ue_PyFMenuBuilder *self, PyO
 	if (!PyArg_ParseTuple(args, "ssO|OiO:add_menu_entry", &label, &tooltip, &py_callableExecAction, &py_obj, &ui_action_type, &py_callableIsActnChecked))
 		return nullptr;
 
-	if (!PyCalllable_Check_Extended(py_callableExecAction))
+	if (!PyCallable_Check(py_callableExecAction))
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 	}
 
-    if (py_callableIsActnChecked && !PyCalllable_Check_Extended(py_callableIsActnChecked))
+    if (py_callableIsActnChecked && !PyCallable_Check(py_callableIsActnChecked))
     {
         return PyErr_Format(PyExc_Exception, "IsActnChecked argument is not callable");
     }
@@ -67,7 +67,7 @@ static PyObject *py_ue_fmenu_builder_add_menu_entry(ue_PyFMenuBuilder *self, PyO
     FIsActionChecked isActnChkdHandler;
     if (py_callableIsActnChecked)
     {
-        if (!PyCalllable_Check_Extended(py_callableIsActnChecked))
+        if (!PyCallable_Check(py_callableIsActnChecked))
         {
             return PyErr_Format(PyExc_Exception, "IsActnChecked argument is not callable");
 	}

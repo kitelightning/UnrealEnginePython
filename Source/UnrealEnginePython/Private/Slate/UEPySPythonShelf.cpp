@@ -91,19 +91,19 @@ static int ue_py_spython_shelf_init(ue_PySPythonShelf *self, PyObject *args, PyO
 		}
 	}
 
-	if (py_callable_double_clicked && !PyCalllable_Check_Extended(py_callable_double_clicked))
+	if (py_callable_double_clicked && !PyCallable_Check(py_callable_double_clicked))
 	{
 		PyErr_SetString(PyExc_Exception, "argument is not callable");
 		return -1;
 	}
 
-	if (py_callable_get_context_menu && !PyCalllable_Check_Extended(py_callable_get_context_menu))
+	if (py_callable_get_context_menu && !PyCallable_Check(py_callable_get_context_menu))
 	{
 		PyErr_SetString(PyExc_Exception, "argument is not callable");
 		return -1;
 	}
 
-	if (py_callable_asset_selected && !PyCalllable_Check_Extended(py_callable_asset_selected))
+	if (py_callable_asset_selected && !PyCallable_Check(py_callable_asset_selected))
 	{
 		PyErr_SetString(PyExc_Exception, "argument is not callable");
 		return -1;
@@ -121,9 +121,9 @@ static int ue_py_spython_shelf_init(ue_PySPythonShelf *self, PyObject *args, PyO
 	{
 		while (PyObject *item = PyIter_Next(py_classes_iterable))
 		{
-			if (PyUnicode_Check(item))
+			if (PyUnicodeOrString_Check(item))
 			{
-				FName class_name = FName(UTF8_TO_TCHAR(PyUnicode_AsUTF8(item)));
+				FName class_name = FName(UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(item)));
 				asset_picker_config.Filter.ClassNames.Add(class_name);
 			}
 		}
@@ -134,9 +134,9 @@ static int ue_py_spython_shelf_init(ue_PySPythonShelf *self, PyObject *args, PyO
 	{
 		while (PyObject *item = PyIter_Next(py_collections_iterable))
 		{
-			if (PyUnicode_Check(item))
+			if (PyUnicodeOrString_Check(item))
 			{
-				FName collection_name = FName(UTF8_TO_TCHAR(PyUnicode_AsUTF8(item)));
+				FName collection_name = FName(UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(item)));
 				asset_picker_config.Collections.Add(FCollectionNameType(collection_name, ECollectionShareType::CST_Local));
 			}
 		}

@@ -3,6 +3,8 @@
 #include "UEPySWidget.h"
 #include <WidgetPath.h>
 
+#include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
+
 static PyObject *ue_PySWidget_str(ue_PySWidget *self)
 {
 #if PY_MAJOR_VERSION >= 3
@@ -119,7 +121,7 @@ static PyObject *py_ue_swidget_bind_on_mouse_button_down(ue_PySWidget *self, PyO
 		return NULL;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 	}
@@ -141,7 +143,7 @@ static PyObject *py_ue_swidget_bind_on_mouse_button_up(ue_PySWidget *self, PyObj
 		return nullptr;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 	}
@@ -163,7 +165,7 @@ static PyObject *py_ue_swidget_bind_on_mouse_double_click(ue_PySWidget *self, Py
 		return NULL;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 	}
@@ -185,7 +187,7 @@ static PyObject *py_ue_swidget_bind_on_mouse_move(ue_PySWidget *self, PyObject *
 		return NULL;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 	}
@@ -351,6 +353,34 @@ static PyObject *py_ue_swidget_new_ref(ue_PySWidget *self, PyObject * args)
 	return (PyObject *)py_ue_new_swidget<ue_PySWidget>(Widget.ToSharedRef(), &ue_PySWidgetType);
 }
 
+static PyObject *py_ue_swidget_assign(ue_PySWidget *self, PyObject * args)
+{
+	char *global_name;
+	if (!PyArg_ParseTuple(args, "s:assign", &global_name))
+	{
+		return nullptr;
+	}
+
+	PyObject *py_globals = PyEval_GetGlobals();
+	if (!py_globals)
+	{
+		return PyErr_Format(PyExc_Exception, "unable to retrieve globals");
+	}
+
+	if (!PyDict_GetItemString(py_globals, global_name))
+	{
+		PyErr_Clear();
+		return PyErr_Format(PyExc_Exception, "global \"%s\" not found", global_name);
+	}
+
+	if (PyDict_SetItemString(py_globals, global_name, (PyObject *)self) < 0)
+	{
+		return PyErr_Format(PyExc_Exception, "unable to assign global \"%s\" to SWidget", global_name);
+	}
+
+	Py_RETURN_SLATE_SELF;
+}
+
 static PyObject *py_ue_swidget_is_valid(ue_PySWidget *self, PyObject * args)
 {
 	TSharedPtr<SWidget> checkPtr = self->Widget;
@@ -399,10 +429,12 @@ static PyMethodDef ue_PySWidget_methods[] = {
 #endif
 	{ "on_mouse_button_down", (PyCFunction)py_ue_swidget_on_mouse_button_down, METH_VARARGS, "" },
 	{ "on_mouse_button_up", (PyCFunction)py_ue_swidget_on_mouse_button_up, METH_VARARGS, "" },
+
+	{ "assign", (PyCFunction)py_ue_swidget_assign, METH_VARARGS, "" },
 	{ NULL }  /* Sentinel */
 };
 
-static void ue_PySWidgett_dealloc(ue_PySWidget *self)
+static void ue_PySWidget_dealloc(ue_PySWidget *self)
 {
 #if defined(UEPY_MEMORY_DEBUG)
 	UE_LOG(LogPython, Warning, TEXT("Destroying ue_PySWidget %p mapped to %s %p (slate refcount: %d)"), self, *self->Widget->GetTypeAsString(), &self->Widget.Get(), self->Widget.GetSharedReferenceCount());
@@ -431,7 +463,7 @@ PyTypeObject ue_PySWidgetType = {
 	"unreal_engine.SWidget", /* tp_name */
 	sizeof(ue_PySWidget), /* tp_basicsize */
 	0,                         /* tp_itemsize */
-	(destructor)ue_PySWidgett_dealloc,       /* tp_dealloc */
+	(destructor)ue_PySWidget_dealloc,       /* tp_dealloc */
 	0,                         /* tp_print */
 	0,                         /* tp_getattr */
 	0,                         /* tp_setattr */

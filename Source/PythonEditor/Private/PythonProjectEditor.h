@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include "WorkflowCentricApplication.h"
+#include "Editor/Kismet/Public/WorkflowOrientedApp/WorkflowCentricApplication.h"
 #include "Editor/Kismet/Public/WorkflowOrientedApp/WorkflowTabManager.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 class FPythonProjectEditor : public FWorkflowCentricApplication, public FGCObject
 {
@@ -61,7 +62,9 @@ public:
 
 	bool Execute();
 
-	bool ExecuteInSandbox();
+#if PLATFORM_MAC
+	bool ExecuteInMainThread();
+#endif
 
 	bool PEP8ize();
 
@@ -82,7 +85,9 @@ private:
 
 	void Execute_Internal();
 
-	void ExecuteInSandbox_Internal();
+#if PLATFORM_MAC
+	void ExecuteInMainThread_Internal();
+#endif
 
 	void PEP8ize_Internal();
 
@@ -105,4 +110,9 @@ protected:
 	TSharedPtr<class FPythonProjectEditorToolbar> ToolbarBuilder;
 
 	static TWeakPtr<FPythonProjectEditor> PythonEditor;
+
+	virtual bool CanSaveAsset() const override { return false; }
+#if ENGINE_MINOR_VERSION > 17
+	virtual bool CanFindInContentBrowser() const override { return false; }
+#endif
 };

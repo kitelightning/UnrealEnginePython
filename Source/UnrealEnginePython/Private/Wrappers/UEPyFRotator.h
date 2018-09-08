@@ -15,7 +15,7 @@ ue_PyFRotator *py_ue_is_frotator(PyObject *);
 
 inline static FRotator& py_ue_frotator_get(ue_PyFRotator *self)
 {
-    return *((FRotator*)py_ue_uscriptstruct_get_data((ue_PyUScriptStruct *)self));
+    return *((FRotator*)((ue_PyUScriptStruct *)self)->u_struct_ptr);
 }
 
 void ue_python_init_frotator(PyObject *);

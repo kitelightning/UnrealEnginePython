@@ -234,7 +234,9 @@ PyObject *py_ue_set_actor_location(ue_PyUObject *self, PyObject * args)
 		PyErr_Format(PyExc_Exception, "uobject is not an actor or a component");
 
 	FHitResult hit;
-	bool success = actor->SetActorLocation(vec, sweep, &hit, teleport_physics ? ETeleportType::TeleportPhysics : ETeleportType::None);
+	bool success = false;
+
+	success = actor->SetActorLocation(vec, sweep, &hit, teleport_physics ? ETeleportType::TeleportPhysics : ETeleportType::None);
 
 	if (!sweep)
 	{
@@ -264,6 +266,7 @@ PyObject *py_ue_add_actor_world_offset(ue_PyUObject *self, PyObject * args)
 		PyErr_Format(PyExc_Exception, "uobject is not an actor or a component");
 
 	FHitResult hit;
+
 	actor->AddActorWorldOffset(vec, sweep, &hit, teleport_physics ? ETeleportType::TeleportPhysics : ETeleportType::None);
 
 	if (!sweep)
@@ -316,6 +319,7 @@ PyObject *py_ue_add_actor_world_rotation(ue_PyUObject *self, PyObject * args)
 	if (!actor)
 		return PyErr_Format(PyExc_Exception, "uobject is not an actor or a component");
 	FHitResult hit;
+
 	actor->AddActorWorldRotation(quat, sweep, &hit, teleport_physics ? ETeleportType::TeleportPhysics : ETeleportType::None);
 
 	if (!sweep)
@@ -341,6 +345,8 @@ PyObject *py_ue_add_actor_local_rotation(ue_PyUObject *self, PyObject * args)
 	if (!actor)
 		return PyErr_Format(PyExc_Exception, "uobject is not an actor or a component");
 	FHitResult hit;
+
+
 	actor->AddActorLocalRotation(quat, sweep, &hit, teleport_physics ? ETeleportType::TeleportPhysics : ETeleportType::None);
 
 	if (!sweep)
@@ -359,16 +365,17 @@ PyObject *py_ue_set_actor_scale(ue_PyUObject *self, PyObject * args)
 
 	FVector vec;
 	if (!py_ue_vector_arg(args, vec))
-		return NULL;
+		return nullptr;
 
 	AActor *actor = ue_get_actor(self);
 	if (!actor)
 		PyErr_Format(PyExc_Exception, "uobject is not an actor or a component");
 
+
 	actor->SetActorScale3D(vec);
 
-	Py_INCREF(Py_None);
-	return Py_None;
+
+	Py_RETURN_NONE;
 
 }
 
@@ -385,7 +392,14 @@ PyObject *py_ue_set_actor_rotation(ue_PyUObject *self, PyObject * args)
 	AActor *actor = ue_get_actor(self);
 	if (!actor)
 		return PyErr_Format(PyExc_Exception, "uobject is not an actor or a component");
-	if (actor->SetActorRotation(quat, teleport_physics ? ETeleportType::TeleportPhysics : ETeleportType::None))
+
+	bool success = false;
+
+
+	success = actor->SetActorRotation(quat, teleport_physics ? ETeleportType::TeleportPhysics : ETeleportType::None);
+
+
+	if (success)
 	{
 		Py_RETURN_TRUE;
 	}
@@ -406,7 +420,9 @@ PyObject *py_ue_set_actor_transform(ue_PyUObject *self, PyObject * args)
 	if (!actor)
 		PyErr_Format(PyExc_Exception, "uobject is not an actor or a component");
 
+
 	actor->SetActorTransform(t);
+
 
 	Py_RETURN_NONE;
 }
@@ -546,7 +562,9 @@ PyObject *py_ue_set_world_location(ue_PyUObject *self, PyObject * args)
 
 	if (self->ue_object->IsA<USceneComponent>())
 	{
+
 		((USceneComponent *)self->ue_object)->SetWorldLocation(vec, sweep, &hit, teleport_physics ? ETeleportType::TeleportPhysics : ETeleportType::None);
+
 		if (!sweep)
 		{
 			Py_RETURN_NONE;
@@ -564,9 +582,10 @@ PyObject *py_ue_set_world_rotation(ue_PyUObject *self, PyObject * args)
 		return NULL;
 	if (self->ue_object->IsA<USceneComponent>())
 	{
+	
 		((USceneComponent *)self->ue_object)->SetWorldRotation(rot);
-		Py_INCREF(Py_None);
-		return Py_None;
+	
+		Py_RETURN_NONE;
 	}
 	return PyErr_Format(PyExc_Exception, "uobject is not a USceneComponent");
 }
@@ -580,9 +599,9 @@ PyObject *py_ue_set_world_scale(ue_PyUObject *self, PyObject * args)
 
 	if (self->ue_object->IsA<USceneComponent>())
 	{
+	
 		((USceneComponent *)self->ue_object)->SetWorldScale3D(vec);
-		Py_INCREF(Py_None);
-		return Py_None;
+	
 	}
 	return PyErr_Format(PyExc_Exception, "uobject is not a USceneComponent");
 }
@@ -600,7 +619,10 @@ PyObject *py_ue_set_world_transform(ue_PyUObject *self, PyObject * args)
 	if (!component)
 		return PyErr_Format(PyExc_Exception, "uobject is not a USceneComponent");
 
+	
 	component->SetWorldTransform(t);
+	
+
 	Py_RETURN_NONE;
 }
 
@@ -617,7 +639,9 @@ PyObject *py_ue_set_relative_transform(ue_PyUObject *self, PyObject * args)
 	if (!component)
 		return PyErr_Format(PyExc_Exception, "uobject is not a USceneComponent");
 
+	
 	component->SetRelativeTransform(t);
+
 	Py_RETURN_NONE;
 }
 
@@ -630,9 +654,10 @@ PyObject *py_ue_set_relative_location(ue_PyUObject *self, PyObject * args)
 
 	if (self->ue_object->IsA<USceneComponent>())
 	{
+	
 		((USceneComponent *)self->ue_object)->SetRelativeLocation(vec);
-		Py_INCREF(Py_None);
-		return Py_None;
+		
+		Py_RETURN_NONE;
 	}
 	return PyErr_Format(PyExc_Exception, "uobject is not a USceneComponent");
 }
@@ -645,9 +670,10 @@ PyObject *py_ue_set_relative_rotation(ue_PyUObject *self, PyObject * args)
 		return NULL;
 	if (self->ue_object->IsA<USceneComponent>())
 	{
+	
 		((USceneComponent *)self->ue_object)->SetRelativeRotation(rot);
-		Py_INCREF(Py_None);
-		return Py_None;
+		
+		Py_RETURN_NONE;
 	}
 	return PyErr_Format(PyExc_Exception, "uobject is not a USceneComponent");
 }
@@ -661,9 +687,10 @@ PyObject *py_ue_set_relative_scale(ue_PyUObject *self, PyObject * args)
 
 	if (self->ue_object->IsA<USceneComponent>())
 	{
+		
 		((USceneComponent *)self->ue_object)->SetRelativeScale3D(vec);
-		Py_INCREF(Py_None);
-		return Py_None;
+		
+		Py_RETURN_NONE;
 	}
 	return PyErr_Format(PyExc_Exception, "uobject is not a USceneComponent");
 }

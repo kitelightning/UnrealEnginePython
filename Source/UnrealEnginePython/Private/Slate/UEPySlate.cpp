@@ -114,12 +114,14 @@
 
 #include "Runtime/Core/Public/Misc/Attribute.h"
 #include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
+#include "Runtime/SlateCore/Public/Styling/SlateStyleRegistry.h"
+#include "Runtime/Slate/Public/Framework/Commands/Commands.h"
 
 FReply FPythonSlateDelegate::OnMouseEvent(const FGeometry &geometry, const FPointerEvent &pointer_event)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"OO", py_ue_new_fgeometry(geometry), py_ue_new_fpointer_event(pointer_event));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"NN", py_ue_new_fgeometry(geometry), py_ue_new_fpointer_event(pointer_event));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -139,7 +141,7 @@ FReply FPythonSlateDelegate::OnKeyDown(const FGeometry &geometry, const FKeyEven
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"OO", py_ue_new_fgeometry(geometry), py_ue_new_fkey_event(key_event));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"NN", py_ue_new_fgeometry(geometry), py_ue_new_fkey_event(key_event));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -257,7 +259,7 @@ void FPythonSlateDelegate::OnLinearColorChanged(FLinearColor color)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_flinearcolor(color));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_flinearcolor(color));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -270,7 +272,7 @@ void FPythonSlateDelegate::OnWindowClosed(const TSharedRef<SWindow> &Window)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", (PyObject *)ue_py_get_swidget(Window));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_swidget<ue_PySWindow>(StaticCastSharedRef<SWidget>(Window), &ue_PySWindowType));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -284,11 +286,11 @@ void FPythonSlateDelegate::OnTabClosed(TSharedRef<SDockTab> Tab)
     FScopePythonGIL gil;
 	ue_PySWidget * py_dock_tab = ue_py_get_swidget(Tab);
     PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", (PyObject *)py_dock_tab);
-    if (!ret)
-    {
-        unreal_engine_py_log_error();
-        return;
-    }
+	if (!ret)
+	{
+		unreal_engine_py_log_error();
+		return;
+	}
 	
 	Py_DECREF(ret);
 	Py_DECREF((PyObject*)py_dock_tab);
@@ -336,7 +338,7 @@ void FPythonSlateDelegate::OnPersistVisualState()
         unreal_engine_py_log_error();
     }
 
-    Py_DECREF(ret);
+	Py_DECREF(ret);
 }
 
 void FPythonSlateDelegate::OnFloatCommitted(float value, ETextCommit::Type commit_type)
@@ -396,7 +398,7 @@ void FPythonSlateDelegate::OnAssetDoubleClicked(const FAssetData& AssetData)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fassetdata(AssetData));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fassetdata(AssetData));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -408,7 +410,7 @@ void FPythonSlateDelegate::OnAssetSelected(const FAssetData& AssetData)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fassetdata(AssetData));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fassetdata(AssetData));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -420,7 +422,7 @@ void FPythonSlateDelegate::OnAssetChanged(const FAssetData& AssetData)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fassetdata(AssetData));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fassetdata(AssetData));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -432,7 +434,7 @@ bool FPythonSlateDelegate::OnShouldFilterAsset(const FAssetData& AssetData)
 {
 	FScopePythonGIL gil;
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fassetdata(AssetData));
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fassetdata(AssetData));
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -484,7 +486,7 @@ void FPythonSlateDelegate::MenuPyAssetBuilder(FMenuBuilder &Builder, TArray<FAss
 		PyList_Append(py_list, py_ue_new_fassetdata(asset));
 	}
 
-	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"OO", py_ue_new_fmenu_builder(Builder), py_list);
+	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"NO", py_ue_new_fmenu_builder(Builder), py_list);
 	if (!ret)
 	{
 		unreal_engine_py_log_error();
@@ -636,7 +638,7 @@ FText FPythonSlateDelegate::GetterFText() const
 		return FText();
 	}
 
-	FText text = FText::FromString(PyUnicode_AsUTF8(str));
+	FText text = FText::FromString(UEPyUnicode_AsUTF8(str));
 	Py_DECREF(str);
 	Py_DECREF(ret);
 	return text;
@@ -660,7 +662,7 @@ FString FPythonSlateDelegate::GetterFString() const
 		return FString();
 	}
 
-	FString fstr = UTF8_TO_TCHAR(PyUnicode_AsUTF8(str));
+	FString fstr = UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(str));
 	Py_DECREF(str);
 	Py_DECREF(ret);
 	return fstr;
@@ -833,6 +835,7 @@ FLinearColor FPythonSlateDelegate::GetterFLinearColor() const
 
 TSharedRef<SDockTab> FPythonSlateDelegate::SpawnPythonTab(const FSpawnTabArgs &args, bool bShouldAutosize)
 {
+    FScopePythonGIL gil;
 	PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", bShouldAutosize ? Py_True : Py_False);
 	if (!ret)
 	{
@@ -916,18 +919,18 @@ ue_PySWidget *ue_py_get_swidget(TSharedRef<SWidget> s_widget)
 {
 	ue_PySWidget *ret = nullptr;
 
-    if (s_widget->GetType().Compare(FName("SWindow")) == 0)
-    {
-        return py_ue_new_swidget<ue_PySWindow>(s_widget, &ue_PySWindowType);
-    }
-    if (s_widget->GetType().Compare(FName("SDockTab")) == 0)
-    {
-        return py_ue_new_swidget<ue_PySDockTab>(s_widget, &ue_PySDockTabType);
-    }
-    else
-    {
-        return py_ue_new_swidget<ue_PySWidget>(s_widget, &ue_PySWidgetType);
-    }
+	if (s_widget->GetType().Compare(FName("SWindow")) == 0)
+	{
+		return py_ue_new_swidget<ue_PySWindow>(s_widget, &ue_PySWindowType);
+	}
+	if (s_widget->GetType().Compare(FName("SDockTab")) == 0)
+	{
+		return py_ue_new_swidget<ue_PySDockTab>(s_widget, &ue_PySDockTabType);
+	}
+	else
+	{
+		return py_ue_new_swidget<ue_PySWidget>(s_widget, &ue_PySWidgetType);
+	}
 
 }
 
@@ -1117,7 +1120,7 @@ public:
 	void MenuPyBuilder(FMenuBuilder &Builder)
 	{
 		FScopePythonGIL gil;
-		PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_fmenu_builder(Builder));
+		PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_fmenu_builder(Builder));
 		if (!ret)
 		{
 			unreal_engine_py_log_error();
@@ -1135,7 +1138,7 @@ public:
 	void ToolBarBuilder(FToolBarBuilder &Builder)
 	{
 		FScopePythonGIL gil;
-		PyObject *ret = PyObject_CallFunction(py_callable, (char *)"O", py_ue_new_ftool_bar_builder(Builder));
+		PyObject *ret = PyObject_CallFunction(py_callable, (char *)"N", py_ue_new_ftool_bar_builder(Builder));
 		if (!ret)
 		{
 			unreal_engine_py_log_error();
@@ -1286,7 +1289,7 @@ PyObject *py_unreal_engine_create_structure_detail_view(PyObject *self, PyObject
 	{
 		Py_INCREF(ue_py_struct);
 		ret->ue_py_struct = ue_py_struct;
-        struct_scope      = MakeShared<FStructOnScope>(ue_py_struct->u_struct, py_ue_uscriptstruct_get_data(ue_py_struct));
+		struct_scope = MakeShared<FStructOnScope>(ue_py_struct->u_struct, ue_py_struct->u_struct_ptr);
 	}
 
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
@@ -1388,7 +1391,7 @@ PyObject *py_unreal_engine_add_menu_extension(PyObject * self, PyObject * args)
 	if (!menu_extension_interface)
 		return PyErr_Format(PyExc_Exception, "module %s is not supported", module);
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	TSharedRef<FPythonSlateCommands> *commands = new TSharedRef<FPythonSlateCommands>(new FPythonSlateCommands());
@@ -1421,7 +1424,7 @@ PyObject *py_unreal_engine_add_menu_bar_extension(PyObject * self, PyObject * ar
 
 	FLevelEditorModule &ExtensibleModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	TSharedRef<FPythonSlateCommands> *commands = new TSharedRef<FPythonSlateCommands>(new FPythonSlateCommands());
@@ -1454,7 +1457,7 @@ PyObject *py_unreal_engine_add_tool_bar_extension(PyObject * self, PyObject * ar
 
 	FLevelEditorModule &ExtensibleModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	TSharedRef<FPythonSlateCommands> *commands = new TSharedRef<FPythonSlateCommands>(new FPythonSlateCommands());
@@ -1482,7 +1485,7 @@ PyObject *py_unreal_engine_add_asset_view_context_menu_extension(PyObject * self
 		return NULL;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
 	FContentBrowserModule &ContentBrowser = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
@@ -1504,12 +1507,13 @@ PyObject *py_unreal_engine_register_nomad_tab_spawner(PyObject * self, PyObject 
 	char *name;
 	PyObject *py_callable;
     PyObject *py_bool = nullptr;
-	if (!PyArg_ParseTuple(args, "sO|O:register_nomad_tab_spawner", &name, &py_callable, &py_bool))
+	PyObject *py_icon = nullptr;
+	if (!PyArg_ParseTuple(args, "sO|OO:register_nomad_tab_spawner", &name, &py_callable, &py_bool, &py_icon))
 	{
 		return NULL;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 		return PyErr_Format(PyExc_Exception, "argument is not callable");
 
     const FName tabName = FName(UTF8_TO_TCHAR(name));
@@ -1521,7 +1525,22 @@ PyObject *py_unreal_engine_register_nomad_tab_spawner(PyObject * self, PyObject 
     bool bshould_auto_size = py_bool && PyObject_IsTrue(py_bool) ? true : false;
 	spawn_tab.BindSP(py_delegate, &FPythonSlateDelegate::SpawnPythonTab, bshould_auto_size);
 
+	FSlateIcon Icon = FSlateIcon();
+	if (py_icon)
+	{
+		ue_PyFSlateIcon *slate_icon = py_ue_is_fslate_icon(py_icon);
+		if (!slate_icon)
+		{
+			return PyErr_Format(PyExc_Exception, "argument is not a FSlateIcon");
+		}
+		Icon = slate_icon->icon;
+	}
+
+
 	FTabSpawnerEntry *spawner_entry = &FGlobalTabmanager::Get()->RegisterNomadTabSpawner(tabName, spawn_tab)
+		.SetDisplayName(FText::FromString((tabName).ToString()))
+		.SetTooltipText(FText::FromString((tabName).ToString()))
+		.SetIcon(Icon)
 #if WITH_EDITOR
 		// TODO: more generic way to set the group
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory())
@@ -1544,7 +1563,9 @@ PyObject *py_unreal_engine_unregister_nomad_tab_spawner(PyObject * self, PyObjec
 
     FName tabSpawnerName = FName(UTF8_TO_TCHAR(name));
     FUnrealEnginePythonHouseKeeper::Get()->UntrackStaticSlateDelegate(FPythonSlateDelegate::TabSpawner, tabSpawnerName);
+    Py_BEGIN_ALLOW_THREADS;
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(tabSpawnerName);
+    Py_END_ALLOW_THREADS;
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -1663,7 +1684,7 @@ PyObject * py_unreal_engine_create_wrapper_from_pyswidget(PyObject *self, PyObje
 
 	FPythonSWidgetWrapper py_swidget_wrapper;
 	py_swidget_wrapper.Widget = Widget;
-	return py_ue_new_uscriptstruct(FPythonSWidgetWrapper::StaticStruct(), (uint8 *)&py_swidget_wrapper);
+	return py_ue_new_owned_uscriptstruct(FPythonSWidgetWrapper::StaticStruct(), (uint8 *)&py_swidget_wrapper);
 }
 
 PyObject *py_unreal_engine_open_color_picker(PyObject *self, PyObject *args, PyObject *kwargs)
@@ -1680,7 +1701,7 @@ PyObject *py_unreal_engine_open_color_picker(PyObject *self, PyObject *args, PyO
 		return nullptr;
 	}
 
-	if (!PyCalllable_Check_Extended(py_callable))
+	if (!PyCallable_Check(py_callable))
 	{
 		return PyErr_Format(PyExc_Exception, "on_color_committed must be a callable");
 	}

@@ -16,7 +16,7 @@ ue_PyFTransform *py_ue_is_ftransform(PyObject *);
 
 inline static FTransform& py_ue_ftransform_get(ue_PyFTransform *self)
 {
-    return *((FTransform*)py_ue_uscriptstruct_get_data((ue_PyUScriptStruct *)self));
+    return *((FTransform*)((ue_PyUScriptStruct *)self)->u_struct_ptr);
 }
 
 void ue_python_init_ftransform(PyObject *);

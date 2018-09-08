@@ -16,7 +16,7 @@ ue_PyFVector *py_ue_is_fvector(PyObject *);
 
 inline static FVector& py_ue_fvector_get(ue_PyFVector *self)
 {
-    return *((FVector*)py_ue_uscriptstruct_get_data((ue_PyUScriptStruct *)self));
+    return *((FVector*)((ue_PyUScriptStruct *)self)->u_struct_ptr);
 }
 
 void ue_python_init_fvector(PyObject *);

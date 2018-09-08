@@ -15,7 +15,7 @@ ue_PyFQuat *py_ue_is_fquat(PyObject *);
 
 inline static FQuat& py_ue_fquat_get(ue_PyFQuat *self)
 {
-    return *((FQuat*)py_ue_uscriptstruct_get_data((ue_PyUScriptStruct *)self));
+    return *((FQuat*)((ue_PyUScriptStruct*)self)->u_struct_ptr);
 }
 
 void ue_python_init_fquat(PyObject *);

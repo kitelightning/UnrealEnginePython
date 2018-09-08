@@ -2,25 +2,6 @@
 // Needed for PROPERTY_BINDING macro
 #include "Widget.h"
 
-static PyObject *py_ue_scheck_box_set_content(ue_PySCheckBox *self, PyObject * args)
-{
-    ue_py_slate_cast(SCheckBox);
-	PyObject *py_content;
-	if (!PyArg_ParseTuple(args, "O:set_content", &py_content))
-	{
-		return NULL;
-	}
-
-	TSharedPtr<SWidget> child = py_ue_is_swidget<SWidget>(py_content);
-    if (!child.IsValid())
-    { return nullptr; }
-
-
-
-    py_SCheckBox->SetContent(child.ToSharedRef());
-
-    Py_RETURN_SLATE_SELF;
-}
 
 static PyObject *py_ue_scheck_box_is_checked(ue_PySCheckBox *self, PyObject * args)
 {
@@ -29,13 +10,14 @@ static PyObject *py_ue_scheck_box_is_checked(ue_PySCheckBox *self, PyObject * ar
 	{
 		Py_RETURN_TRUE;
 	}
-	
+
 	Py_RETURN_FALSE;
 }
 
-static PyObject *py_ue_scheck_box_set_is_checked(ue_PySCheckBox *self, PyObject * args) {
-    ue_py_slate_cast(SCheckBox);
-	PyObject *py_bool;
+static PyObject *py_ue_scheck_box_set_is_checked(ue_PySCheckBox *self, PyObject * args)
+{
+	ue_py_slate_cast(SCheckBox);
+	PyObject * py_bool;
 	if (!PyArg_ParseTuple(args, "O:set_is_checked", &py_bool))
 	{
 		return NULL;
@@ -43,15 +25,37 @@ static PyObject *py_ue_scheck_box_set_is_checked(ue_PySCheckBox *self, PyObject 
 
 	ECheckBoxState CheckedState = PyObject_IsTrue(py_bool) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 
-    py_SCheckBox->SetIsChecked(TAttribute<ECheckBoxState>(CheckedState));
+	py_SCheckBox->SetIsChecked(TAttribute<ECheckBoxState>(CheckedState));
 
 	Py_RETURN_NONE;
+
 }
 
+static PyObject *py_ue_scheck_box_set_content(ue_PySCheckBox *self, PyObject * args)
+{
+	ue_py_slate_cast(SCheckBox);
+	PyObject * py_content;
+	if (!PyArg_ParseTuple(args, "O:set_content", &py_content))
+	{
+		return NULL;
+	}
+
+	TSharedPtr<SWidget> child = py_ue_is_swidget<SWidget>(py_content);
+	if (!child.IsValid())
+	{
+		return nullptr;
+	}
+
+
+
+	py_SCheckBox->SetContent(child.ToSharedRef());
+
+	Py_RETURN_SLATE_SELF;
+}
 
 static PyMethodDef ue_PySCheckBox_methods[] = {
 	{ "is_checked", (PyCFunction)py_ue_scheck_box_is_checked, METH_VARARGS, "" },
-    { "set_content",      (PyCFunction)py_ue_scheck_box_set_content, METH_VARARGS, "" },
+	{ "set_content",      (PyCFunction)py_ue_scheck_box_set_content, METH_VARARGS, "" },
 	{ "set_is_checked",      (PyCFunction)py_ue_scheck_box_set_is_checked, METH_VARARGS, "" },
 	{ NULL }  /* Sentinel */
 };
@@ -111,9 +115,6 @@ static int ue_py_scheck_box_init(ue_PySCheckBox *self, PyObject *args, PyObject 
     ue_py_slate_farguments_optional_struct_ptr("undetermined_image",        UndeterminedImage,        FSlateBrush);
     ue_py_slate_farguments_optional_struct_ptr("undetermined_hoveredimage", UndeterminedHoveredImage, FSlateBrush);
     ue_py_slate_farguments_optional_struct_ptr("undetermined_pressedimage", UndeterminedPressedImage, FSlateBrush);
-
-
-
 	ue_py_snew(SCheckBox);
 	return 0;
 }

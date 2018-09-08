@@ -8,15 +8,23 @@
 
 
 //#define UEPY_MEMORY_DEBUG	1
-//#define UEPY_THREADING 1
 
-#if defined(UNREAL_ENGINE_PYTHON_ON_MAC)
+#include "CoreMinimal.h"
+#include "Runtime/Core/Public/Modules/ModuleManager.h"
+#include "Runtime/SlateCore/Public/Styling/SlateStyle.h"
+#include "UObject/ScriptMacros.h"
+#include "Runtime/Launch/Resources/Version.h"
+
+#if PLATFORM_MAC
 #include <Headers/Python.h>
 #include <Headers/structmember.h>
-#elif defined(UNREAL_ENGINE_PYTHON_ON_LINUX)
+#elif PLATFORM_LINUX
 #include <Python.h>
 #include <structmember.h>
-#else
+#elif PLATFORM_ANDROID
+#include <Python.h>
+#include <structmember.h>
+#elif PLATFORM_WINDOWS
 #include <include/pyconfig.h>
 #ifndef SIZEOF_PID_T
 #define SIZEOF_PID_T 4
@@ -25,27 +33,19 @@
 #include <include/structmember.h>
 #endif
 
-
-#include "CoreMinimal.h"
-#include "ModuleManager.h"
-#include "Styling/SlateStyle.h"
-#include "UObject/ScriptMacros.h"
-#include "Runtime/Launch/Resources/Version.h"
-
-// We need to make sure reference structs do not mistaken for callable
-#define PyCalllable_Check_Extended(value) PyCallable_Check(value) && py_ue_is_uscriptstruct(value) == nullptr
-
 typedef struct
 {
 	PyObject_HEAD
-		/* Type-specific fields go here. */
-		UObject *ue_object;
+	/* Type-specific fields go here. */
+	UObject *ue_object;
 	// reference to proxy class (can be null)
 	PyObject *py_proxy;
 	// the __dict__
 	PyObject *py_dict;
 	// if true RemoveFromRoot will be called at object destruction time
 	int auto_rooted;
+	// if owned the life of the UObject is related to the life of PyObject
+	int owned;
 } ue_PyUObject;
 
 UNREALENGINEPYTHON_API void ue_py_register_magic_module(char *name, PyObject *(*)());
@@ -64,8 +64,10 @@ UNREALENGINEPYTHON_API PyObject *ue_py_register_module(const char *);
 		return -1;\
 	}
 
+
+const char *UEPyUnicode_AsUTF8(PyObject *py_str);
+
 #if PY_MAJOR_VERSION < 3
-char *PyUnicode_AsUTF8(PyObject *py_str);
 int PyGILState_Check();
 #endif
 bool PyUnicodeOrString_Check(PyObject *py_obj);
@@ -99,16 +101,16 @@ class UNREALENGINEPYTHON_API FUnrealEnginePythonModule : public IModuleInterface
 {
 public:
 
-	bool PythonGILAcquire();
-	void PythonGILRelease();
-
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
 	void RunString(char *);
-	void RunStringSandboxed(char *);
 	void RunFile(char *);
-	void RunFileSandboxed(char *, void(*callback)(void *arg), void *arg);
+
+#if PLATFORM_MAC
+	void RunStringInMainThread(char *);
+	void RunFileInMainThread(char *);
+#endif
 
 	void UESetupPythonInterpreter(bool);
 
@@ -131,30 +133,20 @@ private:
 	TSharedPtr<FSlateStyleSet> StyleSet;
 };
 
-
-
 struct FScopePythonGIL
 {
+
+	PyGILState_STATE state;
+
 	FScopePythonGIL()
 	{
-#if defined(UEPY_THREADING)
-		UnrealEnginePythonModule = FModuleManager::LoadModuleChecked<FUnrealEnginePythonModule>("UnrealEnginePython");
-		safeForRelease = UnrealEnginePythonModule.PythonGILAcquire();
-#endif
+		state = PyGILState_Ensure();
 	}
 
 	~FScopePythonGIL()
 	{
-#if defined(UEPY_THREADING)
-		if (safeForRelease)
-		{
-			UnrealEnginePythonModule.PythonGILRelease();
-		}
-#endif
+		PyGILState_Release(state);
 	}
-
-	FUnrealEnginePythonModule UnrealEnginePythonModule;
-	bool safeForRelease;
 };
 
 

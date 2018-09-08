@@ -45,6 +45,7 @@ PyObject *py_unreal_engine_load_package(PyObject *, PyObject *);
 #if WITH_EDITOR
 PyObject *py_unreal_engine_find_actor_by_label_in_world(PyObject *, PyObject *);
 PyObject *py_unreal_engine_unload_package(PyObject *, PyObject *);
+PyObject *py_unreal_engine_get_package_filename(PyObject *, PyObject *);
 #endif
 
 PyObject *py_unreal_engine_string_to_guid(PyObject *, PyObject *);
@@ -54,6 +55,8 @@ PyObject *py_unreal_engine_guid_to_string(PyObject *, PyObject *);
 PyObject *py_unreal_engine_engine_tick(PyObject *, PyObject *);
 PyObject *py_unreal_engine_slate_tick(PyObject *, PyObject *);
 PyObject *py_unreal_engine_get_delta_time(PyObject *, PyObject *);
+
+PyObject *py_unreal_engine_tick_rendering_tickables(PyObject *, PyObject *);
 
 PyObject *py_unreal_engine_all_classes(PyObject *, PyObject *);
 PyObject *py_unreal_engine_all_worlds(PyObject *, PyObject *);
@@ -99,4 +102,6 @@ PyObject *py_unreal_engine_editor_get_pie_viewport_size(PyObject *, PyObject *);
 #endif
 
 
-
+#if PLATFORM_MAC
+PyObject *py_unreal_engine_main_thread_call(PyObject *, PyObject *);
+#endif

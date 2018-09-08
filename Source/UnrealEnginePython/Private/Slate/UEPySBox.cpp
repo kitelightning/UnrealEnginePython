@@ -22,7 +22,7 @@ static PyObject *py_ue_sbox_set_content(ue_PySBox *self, PyObject * args)
 
 static PyObject *py_ue_sbox_set_height_override(ue_PySBox *self, PyObject * args)
 {
-    ue_py_slate_cast(SBox);
+	ue_py_slate_cast(SBox);
 
 	float height_override = 0;
 	if (!PyArg_ParseTuple(args, "f:set_height_override", &height_override))
@@ -38,7 +38,7 @@ static PyObject *py_ue_sbox_set_height_override(ue_PySBox *self, PyObject * args
 
 static PyObject *py_ue_sbox_set_width_override(ue_PySBox *self, PyObject * args)
 {
-    ue_py_slate_cast(SBox);
+	ue_py_slate_cast(SBox);
 
 	float width_override = 0;
 	if (!PyArg_ParseTuple(args, "f:set_width_override", &width_override))
@@ -47,7 +47,7 @@ static PyObject *py_ue_sbox_set_width_override(ue_PySBox *self, PyObject * args)
 	}
 
 	if (width_override != 0)
-        py_SBox->SetWidthOverride(width_override);
+		py_SBox->SetWidthOverride(width_override);
 
 	Py_RETURN_NONE;
 }

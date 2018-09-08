@@ -20,6 +20,10 @@ for a queue of UMovieSceneCapture objects
 #include "Slate/UEPySPythonEditorViewport.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/GameMode.h"
+#include "Runtime/CoreUObject/Public/Serialization/ObjectReader.h"
+#include "Runtime/CoreUObject/Public/Serialization/ObjectWriter.h"
+#include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
+#include "Runtime/Core/Public/Containers/Ticker.h"
 
 
 struct FInEditorMultiCapture : TSharedFromThis<FInEditorMultiCapture>
@@ -343,9 +347,11 @@ PyObject *py_unreal_engine_in_editor_capture(PyObject * self, PyObject * args)
 		Captures.Add(capture);
 	}
 
-	FInEditorMultiCapture::CreateInEditorMultiCapture(Captures);
+	Py_BEGIN_ALLOW_THREADS
+		FInEditorMultiCapture::CreateInEditorMultiCapture(Captures);
+	Py_END_ALLOW_THREADS
 
-	Py_RETURN_NONE;
+		Py_RETURN_NONE;
 }
 
 PyObject *py_ue_set_level_sequence_asset(ue_PyUObject *self, PyObject *args)
@@ -369,8 +375,11 @@ PyObject *py_ue_set_level_sequence_asset(ue_PyUObject *self, PyObject *args)
 	if (!capture)
 		return PyErr_Format(PyExc_Exception, "uobject is not a UAutomatedLevelSequenceCapture");
 
+#if ENGINE_MINOR_VERSION < 20
 	capture->SetLevelSequenceAsset(sequence->GetPathName());
-
+#else
+	capture->LevelSequenceAsset = FSoftObjectPath(sequence->GetPathName());
+#endif
 	Py_RETURN_NONE;
 }
 #endif

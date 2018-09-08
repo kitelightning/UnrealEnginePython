@@ -70,7 +70,7 @@ static PyObject *py_ue_fmenu_builder_add_menu_entry(ue_PyFMenuBuilder *self, PyO
         if (!PyCalllable_Check_Extended(py_callableIsActnChecked))
         {
             return PyErr_Format(PyExc_Exception, "IsActnChecked argument is not callable");
-        }
+	}
         TSharedRef<FPythonSlateDelegate> py_delegateIsActnChecked = FUnrealEnginePythonHouseKeeper::Get()->NewStaticSlateDelegate(py_callableIsActnChecked);
         isActnChkdHandler.BindSP(py_delegateIsActnChecked, &FPythonSlateDelegate::GetterBool);
     }

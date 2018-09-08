@@ -3,8 +3,11 @@
 #include "PyCommandlet.h"
 
 #include "UEPyModule.h"
+#if WITH_EDITOR
+#include "Editor.h"
+#endif
 
-#include "Regex.h"
+#include "Runtime/Core/Public/Internationalization/Regex.h"
 
 UPyCommandlet::UPyCommandlet(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -15,6 +18,12 @@ UPyCommandlet::UPyCommandlet(const FObjectInitializer& ObjectInitializer)
 int32 UPyCommandlet::Main(const FString& CommandLine)
 {
 	FScopePythonGIL gil;
+
+#if WITH_EDITOR
+	// this allows commandlet's to use factories
+	GEditor->Trans = GEditor->CreateTrans();
+
+#endif
 
 	TArray<FString> Tokens, Switches;
 	TMap<FString, FString> Params;
@@ -81,25 +90,31 @@ int32 UPyCommandlet::Main(const FString& CommandLine)
 	{
 #if PY_MAJOR_VERSION >= 3
 		argv[i] = (wchar_t*)malloc(PyArgv[i].Len() + 1);
-#if defined(UNREAL_ENGINE_PYTHON_ON_MAC) || defined(UNREAL_ENGINE_PYTHON_ON_LINUX)
+#if PLATFORM_MAC || PLATFORM_LINUX
 		wcsncpy(argv[i], *PyArgv[i].ReplaceEscapedCharWithChar(), PyArgv[i].Len() + 1);
+#elif PLATFORM_ANDROID
+		wcsncpy(argv[i], (const wchar_t *)*PyArgv[i].ReplaceEscapedCharWithChar(), PyArgv[i].Len() + 1);
 #else
 		wcscpy_s(argv[i], PyArgv[i].Len() + 1, *PyArgv[i].ReplaceEscapedCharWithChar());
 #endif
 #else
 		argv[i] = (char*)malloc(PyArgv[i].Len() + 1);
-#if defined(UNREAL_ENGINE_PYTHON_ON_MAC) || defined(UNREAL_ENGINE_PYTHON_ON_LINUX)
+#if PLATFORM_MAC || PLATFORM_LINUX || PLATFORM_ANDROID
 		strncpy(argv[i], TCHAR_TO_UTF8(*PyArgv[i].ReplaceEscapedCharWithChar()), PyArgv[i].Len() + 1);
 #else
 		strcpy_s(argv[i], PyArgv[i].Len() + 1, TCHAR_TO_UTF8(*PyArgv[i].ReplaceEscapedCharWithChar()));
 #endif
 #endif
-}
+	}
 
 	PySys_SetArgv(PyArgv.Num(), argv);
+
+	Py_BEGIN_ALLOW_THREADS;
 
 	FUnrealEnginePythonModule &PythonModule = FModuleManager::GetModuleChecked<FUnrealEnginePythonModule>("UnrealEnginePython");
 	PythonModule.BrutalFinalize = true;
 	PythonModule.RunFile(TCHAR_TO_UTF8(*Filepath));
+
+	Py_END_ALLOW_THREADS;
 	return 0;
 }

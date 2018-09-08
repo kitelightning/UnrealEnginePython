@@ -14,7 +14,9 @@ PyObject *py_ue_texture_update_resource(ue_PyUObject *self, PyObject * args)
 	if (!texture)
 		return PyErr_Format(PyExc_Exception, "object is not a Texture");
 
+	Py_BEGIN_ALLOW_THREADS;
 	texture->UpdateResource();
+	Py_END_ALLOW_THREADS;
 	Py_RETURN_NONE;
 }
 
@@ -77,7 +79,7 @@ PyObject *py_ue_texture_get_source_data(ue_PyUObject *self, PyObject * args)
 
 	if (!PyArg_ParseTuple(args, "|i:texture_get_data", &mipmap))
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	UTexture2D *tex = ue_py_check_type<UTexture2D>(self);
@@ -93,6 +95,55 @@ PyObject *py_ue_texture_get_source_data(ue_PyUObject *self, PyObject * args)
 
 	tex->Source.UnlockMip(mipmap);
 	return bytes;
+}
+
+PyObject *py_ue_texture_set_source_data(ue_PyUObject *self, PyObject * args)
+{
+
+	ue_py_check(self);
+
+	Py_buffer py_buf;
+	int mipmap = 0;
+
+	if (!PyArg_ParseTuple(args, "z*|i:texture_set_source_data", &py_buf, &mipmap))
+	{
+		return NULL;
+	}
+
+	UTexture2D *tex = ue_py_check_type<UTexture2D>(self);
+	if (!tex)
+		return PyErr_Format(PyExc_Exception, "object is not a Texture2D");
+
+
+	if (!py_buf.buf)
+		return PyErr_Format(PyExc_Exception, "invalid data");
+
+	if (mipmap >= tex->GetNumMips())
+		return PyErr_Format(PyExc_Exception, "invalid mipmap id");
+
+	int32 wanted_len = py_buf.len;
+	int32 len = tex->Source.GetSizeX() * tex->Source.GetSizeY() * 4;
+	// avoid making mess
+	if (wanted_len > len)
+	{
+		UE_LOG(LogPython, Warning, TEXT("truncating buffer to %d bytes"), len);
+		wanted_len = len;
+	}
+
+	const uint8 *blob = tex->Source.LockMip(mipmap);
+
+	FMemory::Memcpy((void *)blob, py_buf.buf, wanted_len);
+
+	tex->Source.UnlockMip(mipmap);
+	Py_BEGIN_ALLOW_THREADS;
+	tex->MarkPackageDirty();
+#if WITH_EDITOR
+	tex->PostEditChange();
+#endif
+
+	tex->UpdateResource();
+	Py_END_ALLOW_THREADS;
+	Py_RETURN_NONE;
 }
 #endif
 
@@ -209,15 +260,16 @@ PyObject *py_ue_texture_set_data(ue_PyUObject *self, PyObject * args)
 	FMemory::Memcpy(blob, py_buf.buf, wanted_len);
 	tex->PlatformData->Mips[mipmap].BulkData.Unlock();
 
+	Py_BEGIN_ALLOW_THREADS;
 	tex->MarkPackageDirty();
 #if WITH_EDITOR
 	tex->PostEditChange();
 #endif
 
 	tex->UpdateResource();
+	Py_END_ALLOW_THREADS;
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 PyObject *py_unreal_engine_compress_image_array(PyObject * self, PyObject * args)
@@ -245,7 +297,9 @@ PyObject *py_unreal_engine_compress_image_array(PyObject * self, PyObject * args
 
 	TArray<uint8> output;
 
+	Py_BEGIN_ALLOW_THREADS;
 	FImageUtils::CompressImageArray(width, height, colors, output);
+	Py_END_ALLOW_THREADS;
 
 	return PyBytes_FromStringAndSize((char *)output.GetData(), output.Num());
 }
@@ -268,8 +322,11 @@ PyObject *py_unreal_engine_create_checkerboard_texture(PyObject * self, PyObject
 	if (!color_two)
 		return PyErr_Format(PyExc_Exception, "argument is not a FColor");
 
-	UTexture2D *texture = FImageUtils::CreateCheckerboardTexture(color_one->color, color_two->color, checker_size);
+	UTexture2D *texture = nullptr;
 
+	Py_BEGIN_ALLOW_THREADS;
+	texture = FImageUtils::CreateCheckerboardTexture(color_one->color, color_two->color, checker_size);
+	Py_END_ALLOW_THREADS;
 	Py_RETURN_UOBJECT(texture);
 }
 
@@ -288,7 +345,9 @@ PyObject *py_unreal_engine_create_transient_texture(PyObject * self, PyObject * 
 	if (!texture)
 		return PyErr_Format(PyExc_Exception, "unable to create texture");
 
+	Py_BEGIN_ALLOW_THREADS;
 	texture->UpdateResource();
+	Py_END_ALLOW_THREADS;
 
 	Py_RETURN_UOBJECT(texture);
 }
@@ -308,8 +367,9 @@ PyObject *py_unreal_engine_create_transient_texture_render_target2d(PyObject * s
 	if (!texture)
 		return PyErr_Format(PyExc_Exception, "unable to create texture render target");
 
+	Py_BEGIN_ALLOW_THREADS;
 	texture->InitCustomFormat(width, height, (EPixelFormat)format, py_linear && PyObject_IsTrue(py_linear));
-
+	Py_END_ALLOW_THREADS;
 	Py_RETURN_UOBJECT(texture);
 }
 

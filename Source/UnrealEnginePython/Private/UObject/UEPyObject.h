@@ -25,6 +25,9 @@ PyObject *py_ue_call(ue_PyUObject *, PyObject *);
 PyObject *py_ue_get_property(ue_PyUObject *, PyObject *);
 PyObject *py_ue_get_property_array_dim(ue_PyUObject *, PyObject *);
 PyObject *py_ue_get_uproperty(ue_PyUObject *, PyObject *);
+PyObject *py_ue_get_inner(ue_PyUObject *, PyObject *);
+PyObject *py_ue_get_key_prop(ue_PyUObject *, PyObject *);
+PyObject *py_ue_get_value_prop(ue_PyUObject *, PyObject *);
 PyObject *py_ue_get_property_class(ue_PyUObject *, PyObject *);
 PyObject *py_ue_has_property(ue_PyUObject *, PyObject *);
 PyObject *py_ue_is_rooted(ue_PyUObject *, PyObject *);
@@ -33,6 +36,9 @@ PyObject *py_ue_add_to_root(ue_PyUObject *, PyObject *);
 PyObject *py_ue_remove_from_root(ue_PyUObject *, PyObject *);
 PyObject *py_ue_auto_root(ue_PyUObject *, PyObject *);
 PyObject *py_ue_output_referencers(ue_PyUObject *, PyObject *);
+PyObject *py_ue_own(ue_PyUObject *, PyObject *);
+PyObject *py_ue_disown(ue_PyUObject *, PyObject *);
+PyObject *py_ue_is_owned(ue_PyUObject *, PyObject *);
 
 PyObject *py_ue_save_config(ue_PyUObject *, PyObject *, PyObject *);
 PyObject *py_ue_save_config_to_section(ue_PyUObject *, PyObject *, PyObject *);
@@ -81,6 +87,8 @@ PyObject *py_ue_class_set_flags(ue_PyUObject *, PyObject *);
 PyObject *py_ue_class_has_any_flags(ue_PyUObject * self, PyObject * args);
 PyObject *py_ue_get_obj_flags(ue_PyUObject *, PyObject *);
 PyObject *py_ue_set_obj_flags(ue_PyUObject *, PyObject *);
+PyObject *py_ue_clear_obj_flags(ue_PyUObject *, PyObject *);
+PyObject *py_ue_reset_obj_flags(ue_PyUObject *, PyObject *);
 PyObject *py_ue_delegate_bind_ufunction(ue_PyUObject *, PyObject *);
 
 

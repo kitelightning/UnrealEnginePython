@@ -31,7 +31,7 @@ static PyMethodDef ue_PyFRotator_methods[] = {
 	{ "get_vector", (PyCFunction)py_ue_frotator_get_vector, METH_VARARGS, "" },
 	{ "get_euler", (PyCFunction)py_ue_frotator_get_euler, METH_VARARGS, "" },
 	{ "normalized", (PyCFunction)py_ue_frotator_normalized, METH_VARARGS, "" },
-	{ "inversed", (PyCFunction)py_ue_frotator_normalized, METH_VARARGS, "" },
+	{ "inversed", (PyCFunction)py_ue_frotator_inversed, METH_VARARGS, "" },
 	{ "quaternion", (PyCFunction)py_ue_frotator_quaternion, METH_VARARGS, "" },
 	{ NULL }  /* Sentinel */
 };
@@ -287,7 +287,7 @@ void ue_python_init_frotator(PyObject *ue_module) {
 PyObject *py_ue_new_frotator(const FRotator& rot) 
 {
 	ue_PyFRotator *ret = (ue_PyFRotator *)PyObject_New(ue_PyFRotator, &ue_PyFRotatorType);
-    ue_py_uscriptstruct_alloc(&ret->py_base, TBaseStructure<FRotator>::Get(), (uint8 const*)&rot, false);
+    ue_py_uscriptstruct_alloc(&ret->py_base, TBaseStructure<FRotator>::Get(), (uint8*)&rot, false);
 	return (PyObject *)ret;
 }
 

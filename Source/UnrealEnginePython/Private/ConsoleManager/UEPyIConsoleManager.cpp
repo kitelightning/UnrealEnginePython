@@ -1,4 +1,5 @@
 #include "UEPyIConsoleManager.h"
+#include "UnrealEnginePython.h"
 
 static PyObject *py_ue_iconsole_manager_add_history_entry(PyObject *cls, PyObject * args)
 {
@@ -435,7 +436,7 @@ static PyObject *py_ue_iconsole_manager_unregister_object(PyObject *cls, PyObjec
 	}
 
 
-	FPythonSmartConsoleDelegate::UnregisterPyDelegate(c_object);
+    FUnrealEnginePythonModule::UnregisterPyConsoleDelegate(c_object);
 
 
 	IConsoleManager::Get().UnregisterConsoleObject(c_object, false);
@@ -543,9 +544,6 @@ void FPythonSmartConsoleDelegate::OnConsoleCommand(const TArray < FString > & In
 	Py_DECREF(ret);
 }
 
-// static TArray declaration
-TArray<FPythonSmartConsoleDelegatePair> FPythonSmartConsoleDelegate::PyDelegatesMapping;
-
 static PyObject *py_ue_iconsole_manager_register_command(PyObject *cls, PyObject * args)
 {
 	char *key;
@@ -579,7 +577,7 @@ static PyObject *py_ue_iconsole_manager_register_command(PyObject *cls, PyObject
 		return PyErr_Format(PyExc_Exception, "unable to register console command \"%s\"", key);
 
 	// this allows the delegates to not be destroyed
-	FPythonSmartConsoleDelegate::RegisterPyDelegate(c_object, py_delegate);
+    FUnrealEnginePythonModule::RegisterPyConsoleDelegate(c_object, py_delegate);
 
 	Py_RETURN_NONE;
 }

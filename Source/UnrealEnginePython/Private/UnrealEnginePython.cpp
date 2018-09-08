@@ -41,6 +41,7 @@ const char *ue4_module_options = "linux_global_symbols";
 #include "Android/AndroidJNI.h"
 #include "Android/AndroidApplication.h"
 #endif
+#include "ConsoleManager/UEPyIConsoleManager.h"
 
 
 const char *UEPyUnicode_AsUTF8(PyObject *py_str)
@@ -230,6 +231,10 @@ FAutoConsoleCommand ExecPythonStringCommand(
 	*NSLOCTEXT("UnrealEnginePython", "CommandText_Cmd", "Execute python string").ToString(),
 	FConsoleCommandWithArgsDelegate::CreateStatic(consoleExecString));
 
+
+FPythonSmartConsoleDelegatePair::FPythonSmartConsoleDelegatePair(IConsoleObject *InKey, TSharedRef<class FPythonSmartConsoleDelegate> InValue) 
+    : Key(InKey), Value(InValue)
+{}
 
 void FUnrealEnginePythonModule::StartupModule()
 {
@@ -521,6 +526,8 @@ void FUnrealEnginePythonModule::StartupModule()
 
 void FUnrealEnginePythonModule::ShutdownModule()
 {
+    PyConsoleDelegatesMapping.Empty();
+
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
 
@@ -610,6 +617,30 @@ FString FUnrealEnginePythonModule::Pep8ize(FString Code)
 	return NewCode;
 }
 
+void FUnrealEnginePythonModule::RegisterPyConsoleDelegate(IConsoleObject *InKey, TSharedRef<FPythonSmartConsoleDelegate>& InValue)
+{
+    FPythonSmartConsoleDelegatePair Pair(InKey, InValue);
+    FUnrealEnginePythonModule::Get().PyConsoleDelegatesMapping.Add(Pair);
+}
+
+void FUnrealEnginePythonModule::UnregisterPyConsoleDelegate(IConsoleObject *Key)
+{
+    int32 Index = -1;
+    const int32 numDelMappings = FUnrealEnginePythonModule::Get().PyConsoleDelegatesMapping.Num();
+    for (int32 i = 0; i < numDelMappings; i++)
+    {
+        if (FUnrealEnginePythonModule::Get().PyConsoleDelegatesMapping[i].Key == Key)
+        {
+            Index = i;
+            break;
+        }
+    }
+
+    if (Index >= 0)
+    {
+        FUnrealEnginePythonModule::Get().PyConsoleDelegatesMapping.RemoveAt(Index);
+    }
+}
 
 void FUnrealEnginePythonModule::RunFile(char *filename)
 {

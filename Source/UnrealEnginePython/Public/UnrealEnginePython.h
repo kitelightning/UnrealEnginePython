@@ -96,10 +96,23 @@ struct TStructOpsTypeTraitsBase2 : TStructOpsTypeTraitsBase
 
 DECLARE_LOG_CATEGORY_EXTERN(LogPython, Log, All);
 
+class FPythonSmartConsoleDelegate;
+struct FPythonSmartConsoleDelegatePair
+{
+    IConsoleObject *Key;
+    TSharedRef<class FPythonSmartConsoleDelegate> Value;
+
+    FPythonSmartConsoleDelegatePair(IConsoleObject *InKey, TSharedRef<class FPythonSmartConsoleDelegate> InValue);
+};
 
 class UNREALENGINEPYTHON_API FUnrealEnginePythonModule : public IModuleInterface
 {
 public:
+    static inline FUnrealEnginePythonModule& Get()
+    {
+        static FUnrealEnginePythonModule& Singleton = FModuleManager::LoadModuleChecked<FUnrealEnginePythonModule>("UnrealEnginePython");
+        return Singleton;
+    }
 
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
@@ -123,6 +136,10 @@ public:
 	// pep8ize a string using various strategy (currently only autopep8 is supported)
 	FString Pep8ize(FString Code);
 
+    static void RegisterPyConsoleDelegate(class IConsoleObject *InKey, TSharedRef<class FPythonSmartConsoleDelegate>& InValue);
+
+    static void UnregisterPyConsoleDelegate(class IConsoleObject *Key);
+
 private:
 	void *ue_python_gil;
 	// used by console
@@ -131,6 +148,12 @@ private:
 	void *main_module;
 
 	TSharedPtr<FSlateStyleSet> StyleSet;
+
+    //NOTE: Static module wide variables should be avoided in UE4.
+    //      Moving this to here instead of FPythonSmartDelegatePair class bc before, the destructors would get called 
+    //      on engine shutdown after module has unloaded which causes app crashes. Now, this gets cleaned on shutdown
+    //      prior to unloading python
+    TArray<struct FPythonSmartConsoleDelegatePair> PyConsoleDelegatesMapping;
 };
 
 struct FScopePythonGIL

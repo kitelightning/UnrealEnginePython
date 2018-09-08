@@ -390,7 +390,7 @@ void ue_python_init_fvector(PyObject *ue_module)
 PyObject *py_ue_new_fvector(const FVector& vec)
 {
 	ue_PyFVector *ret = (ue_PyFVector *)PyObject_New(ue_PyFVector, &ue_PyFVectorType);
-    ue_py_uscriptstruct_alloc(&ret->py_base, TBaseStructure<FVector>::Get(), (uint8 const*)&vec, false);
+    ue_py_uscriptstruct_alloc(&ret->py_base, TBaseStructure<FVector>::Get(), (uint8*)&vec, false);
 	return (PyObject *)ret;
 }
 

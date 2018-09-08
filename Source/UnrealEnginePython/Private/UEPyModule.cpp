@@ -682,7 +682,6 @@ static PyMethodDef ue_PyUObject_methods[] = {
 #pragma warning(suppress: 4191)
 	{ "load_config_from_section", (PyCFunction)py_ue_load_config_from_section, METH_VARARGS | METH_KEYWORDS, "" },
 
-    { "set_folder_path", (PyCFunction)py_ue_actor_set_folder_path, METH_VARARGS, "" },
 	{ "get_actor_label", (PyCFunction)py_ue_get_actor_label, METH_VARARGS, "" },
 	{ "set_actor_label", (PyCFunction)py_ue_set_actor_label, METH_VARARGS, "" },
 	{ "set_actor_hidden_in_game", (PyCFunction)py_ue_set_actor_hidden_in_game, METH_VARARGS, "" },

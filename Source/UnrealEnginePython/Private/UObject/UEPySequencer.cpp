@@ -1208,7 +1208,7 @@ PyObject *py_ue_sequencer_section_add_key(ue_PyUObject *self, PyObject * args)
 	{
 		if (ue_PyFVector *py_vector = py_ue_is_fvector(py_value))
 		{
-			FVector vec = py_vector->vec;
+            FVector vec = py_ue_fvector_get(py_vector);
 #if ENGINE_MINOR_VERSION < 20
 			FVectorKey vx = FVectorKey(EKeyVectorChannel::X, vec.X);
 			FVectorKey vy = FVectorKey(EKeyVectorChannel::Y, vec.Y);

@@ -295,7 +295,7 @@ void ue_python_init_fquat(PyObject *ue_module) {
 PyObject *py_ue_new_fquat(const FQuat& quat)
 {
 	ue_PyFQuat *ret = (ue_PyFQuat *)PyObject_New(ue_PyFQuat, &ue_PyFQuatType);
-    ue_py_uscriptstruct_alloc(&ret->py_base, TBaseStructure<FQuat>::Get(), (uint8 const*)&quat, false);
+    ue_py_uscriptstruct_alloc(&ret->py_base, TBaseStructure<FQuat>::Get(), (uint8*)&quat, false);
 	return (PyObject *)ret;
 }
 

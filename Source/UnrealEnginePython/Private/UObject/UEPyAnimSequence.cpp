@@ -175,7 +175,7 @@ PyObject *py_ue_anim_add_key_to_sequence(ue_PyUObject * self, PyObject * args)
 	if (!ue_py_transform)
 		return PyErr_Format(PyExc_Exception, "argument is not a FTransform.");
 
-	anim_seq->AddKeyToSequence(frame_time, FName(UTF8_TO_TCHAR(track_name)), ue_py_transform->transform);
+    anim_seq->AddKeyToSequence(frame_time, FName(UTF8_TO_TCHAR(track_name)), py_ue_ftransform_get(ue_py_transform));
 
 	Py_RETURN_NONE;
 }

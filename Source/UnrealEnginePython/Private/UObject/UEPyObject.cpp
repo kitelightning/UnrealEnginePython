@@ -2799,32 +2799,6 @@ PyObject *py_ue_get_archetype(ue_PyUObject * self, PyObject * args)
 
 PyObject *py_ue_get_archetype_instances(ue_PyUObject * self, PyObject * args)
 {
-
-	ue_py_check(self);
-
-	TArray<UObject *> Instances;
-
-	self->ue_object->GetArchetypeInstances(Instances);
-
-	PyObject *py_list = PyList_New(0);
-
-	for (UObject *Instance : Instances)
-	{
-		PyList_Append(py_list, (PyObject *)ue_get_python_uobject(Instance));
-	}
-
-	return py_list;
-}
-
-PyObject *py_ue_get_archetype(ue_PyUObject * self, PyObject * args)
-{
-	ue_py_check(self);
-
-	Py_RETURN_UOBJECT(self->ue_object->GetArchetype());
-}
-
-PyObject *py_ue_get_archetype_instances(ue_PyUObject * self, PyObject * args)
-{
     ue_py_check(self);
 
     TArray<UObject*> ObjectArchetypeInstances;

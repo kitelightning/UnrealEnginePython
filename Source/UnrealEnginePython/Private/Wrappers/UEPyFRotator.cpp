@@ -287,7 +287,7 @@ void ue_python_init_frotator(PyObject *ue_module) {
 PyObject *py_ue_new_frotator(const FRotator& rot) 
 {
 	ue_PyFRotator *ret = (ue_PyFRotator *)PyObject_New(ue_PyFRotator, &ue_PyFRotatorType);
-    ue_py_uscriptstruct_alloc(&ret->py_base, TBaseStructure<FRotator>::Get(), (uint8 const*)&rot, false);
+    ue_py_uscriptstruct_alloc(&ret->py_base, TBaseStructure<FRotator>::Get(), (uint8*)&rot, false);
 	return (PyObject *)ret;
 }
 

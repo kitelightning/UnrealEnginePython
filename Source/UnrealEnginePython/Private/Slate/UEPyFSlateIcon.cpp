@@ -2,6 +2,7 @@
 #include "UEPyFSlateIcon.h"
 #include "Engine/Texture2D.h"
 #include "Engine/Engine.h"
+#include "SlateStyleRegistry.h"
 
 static PyObject *py_ue_fslate_icon_get_icon(ue_PyFSlateIcon *self, PyObject * args)
 {

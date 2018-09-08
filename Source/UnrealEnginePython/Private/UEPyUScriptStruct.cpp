@@ -210,12 +210,6 @@ static int ue_PyUScriptStruct_setattro(ue_PyUScriptStruct *self, PyObject *attr_
 		{
 			if (ue_py_convert_pyobject(value, u_property, self->u_struct_ptr, 0))
 			{
-                if (self->is_ptr)
-			    {
-                    // NOTE: We just wrote out to original pointer block; now we need to update our local shadow copy
-                    // This might be unnecessary
-                    FMemory::Memcpy(self->data, self->original_data, self->u_struct->GetStructureSize());
-                }
 				return 0;
 			}
 			PyErr_SetString(PyExc_ValueError, "invalid value for UProperty");
@@ -274,25 +268,32 @@ PyTypeObject ue_PyUScriptStructType = {
 };
 
 
-void ue_py_uscriptstruct_alloc(ue_PyUScriptStruct *self, UScriptStruct* in_u_struct, uint8 const* in_src_data, bool keep_src_ptr)
+void ue_py_uscriptstruct_alloc(ue_PyUScriptStruct *self, UScriptStruct* in_u_struct, uint8* in_src_data, bool keep_src_ptr)
 {
-    self->u_struct      = in_u_struct;
-	self->data          = (uint8*)FMemory::Malloc(self->u_struct->GetStructureSize());
-	self->u_struct->InitializeStruct(self->data);
-
-    if (in_src_data)
+    if (keep_src_ptr)
     {
-        self->u_struct->CopyScriptStruct(self->data, in_src_data);
+        self->u_struct       = in_u_struct;
+        self->u_struct_ptr   = in_src_data;
+        self->u_struct_owned = 0;
     }
     else
     {
-#if WITH_EDITOR
-	    self->u_struct->InitializeDefaultValue(self->data);
-#endif
-    }
+        self->u_struct       = in_u_struct;
+        self->u_struct_ptr   = (uint8*)FMemory::Malloc(self->u_struct->GetStructureSize());
+	    self->u_struct_owned = 1;
 
-	self->original_data = keep_src_ptr && in_src_data ? const_cast<uint8*>(in_src_data) : self->data;
-	self->is_ptr        = 0;
+        self->u_struct->InitializeStruct(self->u_struct_ptr);
+        if (in_src_data)
+        {
+            self->u_struct->CopyScriptStruct(self->u_struct_ptr, in_src_data);
+        }
+        else
+        {
+#if WITH_EDITOR
+            self->u_struct->InitializeDefaultValue(self->u_struct_ptr);
+#endif
+        }
+    }
 }
 
 static int ue_py_uscriptstruct_init(ue_PyUScriptStruct *self, PyObject *args, PyObject *kwargs)

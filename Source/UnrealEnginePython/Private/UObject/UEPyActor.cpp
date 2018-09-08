@@ -253,7 +253,7 @@ PyObject *py_ue_get_folder_path(ue_PyUObject *self, PyObject * args)
 	return PyUnicode_FromString(TCHAR_TO_UTF8(*DirPath.ToString()));
 }
 
-PyObject * py_ue_actor_set_folder_path(ue_PyUObject* self, PyObject * args)
+PyObject * py_ue_set_folder_path(ue_PyUObject* self, PyObject * args)
 {
     ue_py_check(self);
 

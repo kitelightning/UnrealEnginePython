@@ -13,7 +13,7 @@
 
 #include "Wrappers/UEPyFObjectThumbnail.h"
 #endif
-#include <ObjectMacros.h>
+#include "UObject/ObjectMacros.h"
 
 #include "Runtime/Core/Public/Misc/OutputDeviceNull.h"
 #include "Runtime/CoreUObject/Public/Serialization/ObjectWriter.h"

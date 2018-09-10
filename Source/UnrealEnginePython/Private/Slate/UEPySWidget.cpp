@@ -1,7 +1,7 @@
 
 
 #include "UEPySWidget.h"
-#include <WidgetPath.h>
+#include "Layout/WidgetPath.h"
 
 #include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
 

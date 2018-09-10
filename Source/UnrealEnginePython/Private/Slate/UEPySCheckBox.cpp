@@ -1,6 +1,6 @@
 #include "UEPySCheckBox.h"
 // Needed for PROPERTY_BINDING macro
-#include "Widget.h"
+#include "Components/Widget.h"
 
 
 static PyObject *py_ue_scheck_box_is_checked(ue_PySCheckBox *self, PyObject * args)

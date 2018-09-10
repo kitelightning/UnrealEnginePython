@@ -1,5 +1,5 @@
 #include "UEPyFRotator.h"
-#include "Quat.h"
+#include "Math/Quat.h"
 #include "UEPyFQuat.h"
 
 static PyObject *py_ue_frotator_get_vector(ue_PyFRotator *self, PyObject * args) {

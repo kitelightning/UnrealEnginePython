@@ -26,7 +26,7 @@
 #include "Sections/MovieSceneVectorSection.h"
 #include "Runtime/MovieScene/Public/MovieSceneFolder.h"
 #include "Runtime/MovieScene/Public/MovieSceneSpawnable.h"
-#include "Private/SequencerSelection.h"
+#include "SequencerSelection.h"
 #include "Runtime/MovieScene/Public/MovieScenePossessable.h"
 #if ENGINE_MINOR_VERSION < 18
 #include "Editor/UnrealEd/Private/FbxImporter.h"
@@ -36,7 +36,7 @@
 #include "Editor/MovieSceneTools/Public/MatineeImportTools.h"
 #endif
 #include "MovieSceneSection.h"
-#include "Set.h"
+#include "Containers/Set.h"
 
 namespace {
     const FName LevelSequenceEditorName("LevelSequenceEditor");

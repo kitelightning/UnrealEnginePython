@@ -17,7 +17,6 @@ typedef struct
 PyObject *py_ue_new_uscriptstruct(UScriptStruct *, uint8 *);
 PyObject *py_ue_new_owned_uscriptstruct(UScriptStruct *, uint8 *);
 PyObject *py_ue_new_owned_uscriptstruct_zero_copy(UScriptStruct *, uint8 *);
-PyObject *py_ue_uscriptstruct_clone(ue_PyUScriptStruct *, PyObject *);
 void ue_py_uscriptstruct_alloc(ue_PyUScriptStruct *, UScriptStruct *, uint8*, bool);
 ue_PyUScriptStruct *py_ue_is_uscriptstruct(PyObject *);
 

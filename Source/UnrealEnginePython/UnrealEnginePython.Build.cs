@@ -115,7 +115,9 @@ public class UnrealEnginePython : ModuleRules
             new string[] {
                 "UnrealEnginePython/Private",
 				// ... add other private include paths required here ...
-			}
+                Path.Combine(EngineDirectory, "Source/Runtime/Slate/Private"),
+                Path.Combine(EngineDirectory, "Source/Editor/Sequencer/Private"),
+            }
             );
 
 
@@ -302,7 +304,7 @@ public class UnrealEnginePython : ModuleRules
 
             string APLName = "UnrealEnginePython_APL.xml";
             string RelAPLPath = Utils.MakePathRelativeTo(System.IO.Path.Combine(ModuleDirectory, APLName), Target.RelativeEnginePath);
-            AdditionalPropertiesForReceipt.Add(new ReceiptProperty("AndroidPlugin", RelAPLPath));
+            AdditionalPropertiesForReceipt.Add("AndroidPlugin", RelAPLPath);
         }
 #endif
 

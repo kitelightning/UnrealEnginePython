@@ -1,11 +1,11 @@
 
 #include "UEPySDockTab.h"
-#include "SDockTab.h"
-#include "Private/Framework/Docking/SDockingArea.h"
-#include "SlateWindowHelper.h"
-#include "WidgetPath.h"
-#include "IMenu.h"
-#include "SlateApplication.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Framework/Docking/SDockingArea.h"
+#include "Application/SlateWindowHelper.h"
+#include "Layout/WidgetPath.h"
+#include "Framework/Application/IMenu.h"
+#include "Framework/Application/SlateApplication.h"
 
 #include "UEPyFTabManager.h"
 

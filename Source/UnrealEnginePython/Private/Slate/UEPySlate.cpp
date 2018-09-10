@@ -25,10 +25,10 @@
 
 #include "UEPySlate.h"
 #include "PyNativeWidgetHost.h"
-#include <SDockTab.h>
-#include <SharedPointer.h>
+#include "Widgets/Docking/SDockTab.h"
+#include "Templates/SharedPointer.h"
 #include "UEPySWidget.h"
-#include <ModuleManager.h>
+#include "Modules/ModuleManager.h"
 
 #include "Wrappers/UEPyFAssetData.h"
 
@@ -1449,8 +1449,8 @@ PyObject *py_unreal_engine_add_tool_bar_extension(PyObject * self, PyObject * ar
 	PyObject *py_callable;
 
 	char *hook = (char *)"Settings";
-
-	if (!PyArg_ParseTuple(args, "sO|s:add_tool_bar_extension", &command_name, &py_callable, &hook))
+    int32 extensionHookPos = (int32)EExtensionHook::After;
+	if (!PyArg_ParseTuple(args, "sO|si:add_tool_bar_extension", &command_name, &py_callable, &hook, &extensionHookPos))
 	{
 		return NULL;
 	}
@@ -1467,7 +1467,7 @@ PyObject *py_unreal_engine_add_tool_bar_extension(PyObject * self, PyObject * ar
 	commands->Get().RegisterCommands();
 
 	TSharedRef<FExtender> extender = MakeShareable(new FExtender());
-	extender->AddToolBarExtension(hook, EExtensionHook::After, commands->Get().GetCommands(), FToolBarExtensionDelegate::CreateRaw(&commands->Get(), &FPythonSlateCommands::ToolBarBuilder));
+	extender->AddToolBarExtension(hook, (EExtensionHook::Position)extensionHookPos, commands->Get().GetCommands(), FToolBarExtensionDelegate::CreateRaw(&commands->Get(), &FPythonSlateCommands::ToolBarBuilder));
 
 	ExtensibleModule.GetToolBarExtensibilityManager()->AddExtender(extender);
 

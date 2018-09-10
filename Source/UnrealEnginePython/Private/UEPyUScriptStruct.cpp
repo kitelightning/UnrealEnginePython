@@ -122,6 +122,7 @@ static PyObject *py_ue_uscriptstruct_ref(ue_PyUScriptStruct *, PyObject *);
 
 
 
+static PyObject *py_ue_uscriptstruct_clone(ue_PyUScriptStruct *self, PyObject * args);
 
 static PyMethodDef ue_PyUScriptStruct_methods[] = {
 	{ "get_field", (PyCFunction)py_ue_uscriptstruct_get_field, METH_VARARGS, "" },
@@ -409,7 +410,7 @@ PyObject *py_ue_new_owned_uscriptstruct_zero_copy(UScriptStruct *u_struct, uint8
 }
 
 // NOTE: Equivalent to py_ue_new_uscriptstruct() but exposed to python scripts
-PyObject *py_ue_uscriptstruct_clone(ue_PyUScriptStruct *self, PyObject * args)
+static PyObject *py_ue_uscriptstruct_clone(ue_PyUScriptStruct *self, PyObject * args)
 {
 	ue_PyUScriptStruct *ret = (ue_PyUScriptStruct *)PyObject_New(ue_PyUScriptStruct, &ue_PyUScriptStructType);
 	ret->u_struct           = self->u_struct;

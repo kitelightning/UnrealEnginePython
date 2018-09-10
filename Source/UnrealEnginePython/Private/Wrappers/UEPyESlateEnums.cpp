@@ -7,14 +7,14 @@
 #include "IDetailsView.h"
 #include "UnrealWidget.h"
 #endif
-#include <ObjectMacros.h>
-#include "SSplitter.h"
-#include "MenuStack.h"
+#include "UObject/ObjectMacros.h"
+#include "Widgets/Layout/SSplitter.h"
+#include "Framework/Application/MenuStack.h"
 #include "SlateFwd.h"
-#include "SDockTab.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "RHIDefinitions.h"
 #include "SceneTypes.h"
-#include "Overscroll.h"
+#include "Framework/Layout/Overscroll.h"
 
 
 static PyGetSetDef ue_PyESlateEnums_getseters[] = {
@@ -306,6 +306,13 @@ void ue_python_init_eslate_enums(PyObject *ue_module)
                 'COORD_World',
                 'COORD_Local',
                 'COORD_Max',
+                ]),
+        EnumDef(name='EExtensionHook',
+                cppNameScope='EExtensionHook::Position',
+                values=[
+                'Before',
+                'After',
+                'First',
                 ]),
     ]
 
@@ -653,6 +660,20 @@ void ue_python_init_eslate_enums(PyObject *ue_module)
         PyObject_SetAttrString((PyObject*)native_ECoordSystem, "COORD_World"    , PyLong_FromLong((int)ECoordSystem::COORD_World));
         PyObject_SetAttrString((PyObject*)native_ECoordSystem, "COORD_Local"    , PyLong_FromLong((int)ECoordSystem::COORD_Local));
         PyObject_SetAttrString((PyObject*)native_ECoordSystem, "COORD_Max"      , PyLong_FromLong((int)ECoordSystem::COORD_Max));
+    }
+
+    // Enum Wrapper: EExtensionHook
+    {
+        PyObject* native_EExtensionHook = PyDict_GetItemString(unreal_engine_dict, "EExtensionHook");
+        if (native_EExtensionHook == nullptr)
+        {
+            native_EExtensionHook = ue_PyESlateEnums_new(&ue_PyESlateEnumsType, nullptr, nullptr);
+            PyDict_SetItemString(unreal_engine_dict, "EExtensionHook", (PyObject*)native_EExtensionHook);
+        }
+
+        PyObject_SetAttrString((PyObject*)native_EExtensionHook, "Before"         , PyLong_FromLong((int)EExtensionHook::Position::Before));
+        PyObject_SetAttrString((PyObject*)native_EExtensionHook, "After"          , PyLong_FromLong((int)EExtensionHook::Position::After));
+        PyObject_SetAttrString((PyObject*)native_EExtensionHook, "First"          , PyLong_FromLong((int)EExtensionHook::Position::First));
     }
 
     #endif

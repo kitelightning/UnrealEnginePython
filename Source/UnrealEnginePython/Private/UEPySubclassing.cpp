@@ -21,9 +21,9 @@ int unreal_engine_py_init(ue_PyUObject *self, PyObject *args, PyObject *kwds)
 	if (PyTuple_Size(args) == 3)
 	{
 		// TODO make it smarter on error checking
-		UE_LOG(LogPython, Warning, TEXT("%s"), UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(PyObject_Str(PyTuple_GetItem(args, 0)))));
-		UE_LOG(LogPython, Warning, TEXT("%s"), UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(PyObject_Str(PyTuple_GetItem(args, 1)))));
-		UE_LOG(LogPython, Warning, TEXT("%s"), UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(PyObject_Str(PyTuple_GetItem(args, 2)))));
+		UE_LOG(LogPython, Log, TEXT("%s"), UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(PyObject_Str(PyTuple_GetItem(args, 0)))));
+		UE_LOG(LogPython, Log, TEXT("%s"), UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(PyObject_Str(PyTuple_GetItem(args, 1)))));
+		UE_LOG(LogPython, Log, TEXT("%s"), UTF8_TO_TCHAR(UEPyUnicode_AsUTF8(PyObject_Str(PyTuple_GetItem(args, 2)))));
 
 		PyObject *parents = PyTuple_GetItem(args, 1);
 		ue_PyUObject *parent = (ue_PyUObject *)PyTuple_GetItem(parents, 0);
@@ -72,7 +72,7 @@ int unreal_engine_py_init(ue_PyUObject *self, PyObject *args, PyObject *kwds)
 
 			if (UProperty *u_property = new_class->FindPropertyByName(FName(UTF8_TO_TCHAR(class_key))))
 			{
-				UE_LOG(LogPython, Warning, TEXT("Found UProperty %s"), UTF8_TO_TCHAR(class_key));
+				UE_LOG(LogPython, Log, TEXT("Found UProperty %s"), UTF8_TO_TCHAR(class_key));
 				PyDict_SetItem(py_additional_properties, key, value);
 				prop_added = true;
 			}
@@ -305,7 +305,7 @@ int unreal_engine_py_init(ue_PyUObject *self, PyObject *args, PyObject *kwds)
 
 			if (!prop_added)
 			{
-				UE_LOG(LogPython, Warning, TEXT("Adding %s as attr"), UTF8_TO_TCHAR(class_key));
+				UE_LOG(LogPython, Log, TEXT("Adding %s as attr"), UTF8_TO_TCHAR(class_key));
 				PyObject_SetAttr((PyObject *)self, key, value);
 			}
 		}

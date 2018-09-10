@@ -6,10 +6,11 @@
 #include "Editor/UnrealEd/Public/Kismet2/BlueprintEditorUtils.h"
 #include "Editor/UnrealEd/Classes/MaterialGraph/MaterialGraphSchema.h"
 #endif
-#include <Materials/MaterialInterface.h>
-#include <Shader.h>
-#include <MaterialShared.h>
+#include "Materials/MaterialInterface.h"
+#include "Shader.h"
+#include "MaterialShared.h"
 #include "Materials/Material.h"
+#include "MaterialStatsCommon.h"
 
 PyObject *py_ue_get_material_instruction_count(ue_PyUObject *self, PyObject * args)
 {
@@ -38,12 +39,11 @@ PyObject *py_ue_get_material_instruction_count(ue_PyUObject *self, PyObject * ar
 	material_resource = material->GetMaterialResource((ERHIFeatureLevel::Type)feature_level, (EMaterialQualityLevel::Type)material_quality);
 	FMaterialShaderMapId OutId;
 	TArray<FString> Descriptions;
-	TArray<int32> InstructionCounts;
-	
-	material_resource->GetRepresentativeInstructionCounts(Descriptions, InstructionCounts);
+    TArray<FMaterialStatsUtils::FShaderInstructionsInfo> Results;
+    FMaterialStatsUtils::GetRepresentativeInstructionCounts(Results, material_resource);
 
 	// [0] = Base pass shader count, [Last] = Vertex shader, discarding the other two as they are permutations of 0 for surface/volumetric lightmap cases
-	instruction_count = InstructionCounts.Last() + InstructionCounts[0];
+    instruction_count = Results.Last().InstructionCount + Results[0].InstructionCount;
 
 	return PyLong_FromLong(instruction_count);
 }

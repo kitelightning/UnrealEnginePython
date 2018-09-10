@@ -2277,8 +2277,12 @@ PyObject *ue_py_convert_property(UProperty *prop, uint8 *buffer, int32 index)
                 ue_PyUScriptStruct *pyScriptStruct = py_ue_is_uscriptstruct(pyStructVal);
                 if (pyScriptStruct && bNeedsCopy)
                 {
-                    retObj = py_ue_uscriptstruct_clone(pyScriptStruct, nullptr);
-                    Py_XDECREF(pyStructVal);
+                    uint8 *origStructData = pyScriptStruct->u_struct_ptr;
+                    uint8 *newStruct_data = (uint8*)FMemory::Malloc(pyScriptStruct->u_struct->GetStructureSize());
+                    pyScriptStruct->u_struct->InitializeStruct(newStruct_data);
+                    pyScriptStruct->u_struct->CopyScriptStruct(newStruct_data, origStructData);
+                    pyScriptStruct->u_struct_ptr = newStruct_data;
+                    pyScriptStruct->u_struct_owned = 1;
                 }
 
                 return retObj;

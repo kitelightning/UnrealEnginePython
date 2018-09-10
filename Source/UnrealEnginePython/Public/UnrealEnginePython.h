@@ -163,11 +163,21 @@ struct FScopePythonGIL
 
 	FScopePythonGIL()
 	{
+        //TODO: ikrimae: #ThirdParty-Python-BUG: Without this, engine crashes on exit because the destructors for 
+        //             APyActor, APyHUD, etc get run after python is unloaded
+        if (GExitPurge)
+        { return;    }
+
 		state = PyGILState_Ensure();
 	}
 
 	~FScopePythonGIL()
 	{
+        //TODO: ikrimae: #ThirdParty-Python-BUG: Without this, engine crashes on exit because the destructors for 
+        //             APyActor, APyHUD, etc get run after python is unloaded
+        if (GExitPurge)
+        { return;    }
+
 		PyGILState_Release(state);
 	}
 };

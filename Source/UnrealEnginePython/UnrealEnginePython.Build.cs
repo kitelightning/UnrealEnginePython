@@ -105,7 +105,7 @@ public class UnrealEnginePython : ModuleRules
 
         PublicIncludePaths.AddRange(
             new string[] {
-                "UnrealEnginePython/Public",
+                Path.Combine(ModuleDirectory, "Public"),
 				// ... add public include paths required here ...
             }
             );
@@ -113,7 +113,7 @@ public class UnrealEnginePython : ModuleRules
 
         PrivateIncludePaths.AddRange(
             new string[] {
-                "UnrealEnginePython/Private",
+                Path.Combine(ModuleDirectory, "Private"),
 				// ... add other private include paths required here ...
                 Path.Combine(EngineDirectory, "Source/Runtime/Slate/Private"),
                 Path.Combine(EngineDirectory, "Source/Editor/Sequencer/Private"),

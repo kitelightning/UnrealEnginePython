@@ -262,13 +262,26 @@ void FUnrealEnginePythonModule::StartupModule()
 
 	if (GConfig->GetString(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("RelativeHome"), PythonHome, GEngineIni))
 	{
-		PythonHome = FPaths::Combine(*PROJECT_CONTENT_DIR, *PythonHome);
-		FPaths::NormalizeFilename(PythonHome);
-		PythonHome = FPaths::ConvertRelativePathToFull(PythonHome);
+        if (FPaths::DirectoryExists(FPaths::Combine(*PROJECT_CONTENT_DIR, *PythonHome)) )
+        {
+            PythonHome = FPaths::Combine(*PROJECT_CONTENT_DIR, *PythonHome);
+            FPaths::NormalizeFilename(PythonHome);
+        }
+        else if (FPaths::DirectoryExists(FPaths::Combine(*FPaths::EngineDir(), *PythonHome)))
+        {
+            PythonHome = FPaths::Combine(*FPaths::EngineDir(), *PythonHome);
+            FPaths::NormalizeFilename(PythonHome);
+        }
+        else
+        {
+            FPaths::NormalizeFilename(PythonHome);
+        }
+
+        PythonHome = FPaths::ConvertRelativePathToFull(PythonHome);
 #if PY_MAJOR_VERSION >= 3
-		wchar_t *home = (wchar_t *)*PythonHome;
+        wchar_t *home = (wchar_t *)*PythonHome;
 #else
-		char *home = TCHAR_TO_UTF8(*PythonHome);
+        char *home = TCHAR_TO_UTF8(*PythonHome);
 #endif
         if (FPaths::DirectoryExists(PythonHome))
         {

@@ -427,14 +427,14 @@ public class UnrealEnginePython : ModuleRules
         string[] allPaths = System.Environment.GetEnvironmentVariable("PATH").Split(';');
         // this will transform the slashes in backslashes...
         string checkedPath = !string.IsNullOrWhiteSpace(basePath) 
-            ? new System.Uri(Path.GetFullPath(basePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)).LocalPath
+            ? new System.Uri(Path.GetFullPath(System.Environment.ExpandEnvironmentVariables(basePath)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)).LocalPath
             : basePath;
         
         bool found = false;
         foreach (string item in allPaths)
         {
             string checkedItem = !string.IsNullOrWhiteSpace(item)
-                ? new System.Uri(item.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)).LocalPath
+                ? new System.Uri(Path.GetFullPath(System.Environment.ExpandEnvironmentVariables(item)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)).LocalPath
                 : item;
             if (checkedItem == checkedPath)
             {

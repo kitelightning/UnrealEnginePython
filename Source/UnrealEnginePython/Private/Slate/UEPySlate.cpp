@@ -891,6 +891,8 @@ TSharedRef<ITableRow> FPythonSlateDelegate::GenerateRow(TSharedPtr<FPythonItem> 
 
 void FPythonSlateDelegate::GetChildren(TSharedPtr<FPythonItem> InItem, TArray<TSharedPtr<FPythonItem>>& OutChildren)
 {
+    FScopePythonGIL gil;
+
 	PyObject *ret = PyObject_CallFunction(py_callable, (char*)"O", InItem.Get()->py_object);
 	if (!ret)
 	{

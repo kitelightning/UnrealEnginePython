@@ -106,6 +106,7 @@ PyObject *py_unreal_engine_blueprint_mark_as_structurally_modified(PyObject *, P
 PyObject *py_unreal_engine_create_material_instance(PyObject *, PyObject *);
 
 PyObject *py_unreal_engine_allow_actor_script_execution_in_editor(PyObject *, PyObject *);
+PyObject *py_unreal_engine_get_allow_actor_script_execution_in_editor(PyObject *, PyObject *);
 
 PyObject *py_unreal_engine_get_asset_referencers(PyObject *, PyObject *);
 PyObject *py_unreal_engine_get_asset_dependencies(PyObject *, PyObject *);

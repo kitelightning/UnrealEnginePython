@@ -143,10 +143,6 @@ PyObject *py_unreal_engine_get_editor_world(PyObject * self, PyObject * args)
 
 PyObject *py_unreal_engine_allow_actor_script_execution_in_editor(PyObject * self, PyObject * args)
 {
-
-	if (!GEditor)
-		return PyErr_Format(PyExc_Exception, "no GEditor found");
-
 	PyObject *obj = nullptr;
 	if (!PyArg_ParseTuple(args, "O:allow_actor_script_execution_in_editor", &obj))
 	{
@@ -160,6 +156,12 @@ PyObject *py_unreal_engine_allow_actor_script_execution_in_editor(PyObject * sel
 	GAllowActorScriptExecutionInEditor = enable;
 
 	Py_RETURN_NONE;
+}
+
+PyObject *py_unreal_engine_get_allow_actor_script_execution_in_editor(PyObject * self, PyObject * args)
+{
+         if (GAllowActorScriptExecutionInEditor) { Py_RETURN_TRUE;  }
+    else                                         { Py_RETURN_FALSE; }
 }
 
 

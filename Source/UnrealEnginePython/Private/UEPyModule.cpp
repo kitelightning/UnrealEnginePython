@@ -349,6 +349,7 @@ static PyMethodDef unreal_engine_methods[] = {
 	{ "close_editor_for_asset", py_unreal_engine_close_editor_for_asset, METH_VARARGS, "" },
 	{ "close_all_asset_editors", py_unreal_engine_close_all_asset_editors, METH_VARARGS, "" },
 	{ "allow_actor_script_execution_in_editor", py_unreal_engine_allow_actor_script_execution_in_editor , METH_VARARGS, "" },
+    { "get_allow_actor_script_execution_in_editor", py_unreal_engine_get_allow_actor_script_execution_in_editor, METH_VARARGS, "" },
     { "get_geditor", py_unreal_engine_get_geditor, METH_VARARGS, "" },
 	{ "get_editor_world", py_unreal_engine_get_editor_world, METH_VARARGS, "" },
 	{ "editor_get_selected_actors", py_unreal_engine_editor_get_selected_actors, METH_VARARGS, "" },

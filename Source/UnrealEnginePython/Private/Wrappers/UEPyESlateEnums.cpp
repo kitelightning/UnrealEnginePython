@@ -259,6 +259,32 @@ void ue_python_init_eslate_enums(PyObject *ue_module)
                     'Yes',
                     'No',
                 ]),
+
+        EnumDef(name='EAppMsgType',
+                cppNameScope='EAppMsgType::Type',
+                values=[
+                    'Ok',
+                    'YesNo',
+                    'OkCancel',
+                    'YesNoCancel',
+                    'CancelRetryContinue',
+                    'YesNoYesAllNoAll',
+                    'YesNoYesAllNoAllCancel',
+                    'YesNoYesAll',
+                ]),
+
+        EnumDef(name='EAppReturnType',
+                cppNameScope='EAppReturnType::Type',
+                values=[
+                    'No',
+                    'Yes',
+                    'YesAll',
+                    'NoAll',
+                    'Cancel',
+                    'Ok',
+                    'Retry',
+                    'Continue',
+                ]),
     ]    
 
     #############################################################################################
@@ -593,6 +619,44 @@ void ue_python_init_eslate_enums(PyObject *ue_module)
 
         PyObject_SetAttrString((PyObject*)native_EAllowOverscroll, "Yes"            , PyLong_FromLong((int)EAllowOverscroll::Yes));
         PyObject_SetAttrString((PyObject*)native_EAllowOverscroll, "No"             , PyLong_FromLong((int)EAllowOverscroll::No));
+    }
+
+    // Enum Wrapper: EAppMsgType
+    {
+        PyObject* native_EAppMsgType = PyDict_GetItemString(unreal_engine_dict, "EAppMsgType");
+        if (native_EAppMsgType == nullptr)
+        {
+            native_EAppMsgType = ue_PyESlateEnums_new(&ue_PyESlateEnumsType, nullptr, nullptr);
+            PyDict_SetItemString(unreal_engine_dict, "EAppMsgType", (PyObject*)native_EAppMsgType);
+        }
+
+        PyObject_SetAttrString((PyObject*)native_EAppMsgType, "Ok"             , PyLong_FromLong((int)EAppMsgType::Type::Ok));
+        PyObject_SetAttrString((PyObject*)native_EAppMsgType, "YesNo"          , PyLong_FromLong((int)EAppMsgType::Type::YesNo));
+        PyObject_SetAttrString((PyObject*)native_EAppMsgType, "OkCancel"       , PyLong_FromLong((int)EAppMsgType::Type::OkCancel));
+        PyObject_SetAttrString((PyObject*)native_EAppMsgType, "YesNoCancel"    , PyLong_FromLong((int)EAppMsgType::Type::YesNoCancel));
+        PyObject_SetAttrString((PyObject*)native_EAppMsgType, "CancelRetryContinue", PyLong_FromLong((int)EAppMsgType::Type::CancelRetryContinue));
+        PyObject_SetAttrString((PyObject*)native_EAppMsgType, "YesNoYesAllNoAll", PyLong_FromLong((int)EAppMsgType::Type::YesNoYesAllNoAll));
+        PyObject_SetAttrString((PyObject*)native_EAppMsgType, "YesNoYesAllNoAllCancel", PyLong_FromLong((int)EAppMsgType::Type::YesNoYesAllNoAllCancel));
+        PyObject_SetAttrString((PyObject*)native_EAppMsgType, "YesNoYesAll"    , PyLong_FromLong((int)EAppMsgType::Type::YesNoYesAll));
+    }
+
+    // Enum Wrapper: EAppReturnType
+    {
+        PyObject* native_EAppReturnType = PyDict_GetItemString(unreal_engine_dict, "EAppReturnType");
+        if (native_EAppReturnType == nullptr)
+        {
+            native_EAppReturnType = ue_PyESlateEnums_new(&ue_PyESlateEnumsType, nullptr, nullptr);
+            PyDict_SetItemString(unreal_engine_dict, "EAppReturnType", (PyObject*)native_EAppReturnType);
+        }
+
+        PyObject_SetAttrString((PyObject*)native_EAppReturnType, "No"             , PyLong_FromLong((int)EAppReturnType::Type::No));
+        PyObject_SetAttrString((PyObject*)native_EAppReturnType, "Yes"            , PyLong_FromLong((int)EAppReturnType::Type::Yes));
+        PyObject_SetAttrString((PyObject*)native_EAppReturnType, "YesAll"         , PyLong_FromLong((int)EAppReturnType::Type::YesAll));
+        PyObject_SetAttrString((PyObject*)native_EAppReturnType, "NoAll"          , PyLong_FromLong((int)EAppReturnType::Type::NoAll));
+        PyObject_SetAttrString((PyObject*)native_EAppReturnType, "Cancel"         , PyLong_FromLong((int)EAppReturnType::Type::Cancel));
+        PyObject_SetAttrString((PyObject*)native_EAppReturnType, "Ok"             , PyLong_FromLong((int)EAppReturnType::Type::Ok));
+        PyObject_SetAttrString((PyObject*)native_EAppReturnType, "Retry"          , PyLong_FromLong((int)EAppReturnType::Type::Retry));
+        PyObject_SetAttrString((PyObject*)native_EAppReturnType, "Continue"       , PyLong_FromLong((int)EAppReturnType::Type::Continue));
     }
 
     #if WITH_EDITOR

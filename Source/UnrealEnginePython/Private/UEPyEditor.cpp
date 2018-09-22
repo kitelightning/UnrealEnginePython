@@ -2223,6 +2223,46 @@ PyObject *py_ue_factory_import_object(ue_PyUObject *self, PyObject * args)
 	Py_RETURN_UOBJECT(u_object);
 }
 
+
+PyObject * py_unreal_engine_set_level_visibility(PyObject *self, PyObject * args)
+{
+    PyObject* py_level               = nullptr;
+    PyObject* py_bShouldBeVisible    = nullptr;
+    PyObject* py_bForceLayersVisible = nullptr;
+    uint32    modifyMode             = (uint32)ELevelVisibilityDirtyMode::DontModify;
+    if (!PyArg_ParseTuple(args, "OOO|K:set_level_visibility", &py_level, &py_bShouldBeVisible, &py_bForceLayersVisible, &modifyMode))
+    {
+        return NULL;
+    }
+
+    ULevel* level = ue_py_check_type<ULevel>(py_level);
+    if (!level)
+    { return PyErr_Format(PyExc_Exception, "argument is not a ULevel"); }
+
+    UEditorLevelUtils::SetLevelVisibility(level, py_bShouldBeVisible == Py_True ? true : false, py_bForceLayersVisible == Py_True ? true : false, (ELevelVisibilityDirtyMode)modifyMode);
+
+    Py_RETURN_NONE;
+}
+
+PyObject * py_unreal_engine_set_streaming_level_visibility(PyObject *self, PyObject * args)
+{
+    PyObject* py_streaming_level     = nullptr;
+    PyObject* py_bShouldBeVisible    = nullptr;
+    if (!PyArg_ParseTuple(args, "OO:set_streaming_level_visibility", &py_streaming_level, &py_bShouldBeVisible))
+    {
+        return NULL;
+    }
+
+    ULevelStreaming* streaming_lvl = ue_py_check_type<ULevelStreaming>(py_streaming_level);
+    if (!streaming_lvl)
+    { return PyErr_Format(PyExc_Exception, "argument is not a ULevelStreaming"); }
+
+    streaming_lvl->SetShouldBeVisibleInEditor(py_bShouldBeVisible == Py_True ? true : false);
+    GWorld->FlushLevelStreaming();
+
+    Py_RETURN_NONE;
+}
+
 PyObject *py_unreal_engine_add_level_to_world(PyObject *self, PyObject * args)
 {
 

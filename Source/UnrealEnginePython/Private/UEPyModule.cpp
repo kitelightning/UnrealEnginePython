@@ -439,6 +439,8 @@ static PyMethodDef unreal_engine_methods[] = {
 	{ "editor_play", py_unreal_engine_editor_play, METH_VARARGS, "" },
 
 	{ "find_actor_by_label_in_world", py_unreal_engine_find_actor_by_label_in_world, METH_VARARGS, "" },
+    { "set_level_visibility", py_unreal_engine_set_level_visibility, METH_VARARGS, "" },
+    { "set_streaming_level_visibility", py_unreal_engine_set_streaming_level_visibility, METH_VARARGS, "" },
 	{ "add_level_to_world", py_unreal_engine_add_level_to_world, METH_VARARGS, "" },
 	{ "move_selected_actors_to_level", py_unreal_engine_move_selected_actors_to_level, METH_VARARGS, "" },
 	{ "move_actor_to_level", py_unreal_engine_move_actor_to_level, METH_VARARGS, "" },

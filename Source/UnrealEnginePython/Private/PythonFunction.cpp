@@ -31,8 +31,9 @@ void UPythonFunction::CallPythonCallable(FFrame& Stack, RESULT_DECL)
 	// count the number of arguments
 	Py_ssize_t argn = (Context && !is_static) ? 1 : 0;
 	TFieldIterator<UProperty> IArgs(function);
-	for (; IArgs && ((IArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++IArgs) {
-		argn++;
+	for (; IArgs && IArgs->HasAnyPropertyFlags(CPF_Parm); ++IArgs) {
+		if ((IArgs->PropertyFlags & (CPF_Parm|CPF_ReturnParm)) == CPF_Parm)
+        { argn++; }
 	}
 #if defined(UEPY_MEMORY_DEBUG)
 	UE_LOG(LogPython, Warning, TEXT("Initializing %d parameters"), argn);

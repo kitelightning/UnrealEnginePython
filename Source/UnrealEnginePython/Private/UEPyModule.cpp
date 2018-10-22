@@ -3116,42 +3116,45 @@ PyObject *py_ue_ufunction_call(UFunction *u_function, UObject *u_obj, PyObject *
 	int has_out_params = 0;
 
 	TFieldIterator<UProperty> PArgs(u_function);
-	for (; PArgs && ((PArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++PArgs)
+	for (; PArgs && PArgs->HasAnyPropertyFlags(CPF_Parm); ++PArgs)
 	{
-		UProperty *prop = *PArgs;
-		if (argn < tuple_len)
-		{
-			PyObject *py_arg = PyTuple_GetItem(args, argn);
-			if (!py_arg)
-			{
-				py_ue_destroy_params(u_function, buffer);
-				return PyErr_Format(PyExc_TypeError, "unable to get pyobject for property %s", TCHAR_TO_UTF8(*prop->GetName()));
-			}
-			if (!ue_py_convert_pyobject(py_arg, prop, buffer, 0))
-			{
-				py_ue_destroy_params(u_function, buffer);
-				return PyErr_Format(PyExc_TypeError, "unable to convert pyobject to property %s (%s)", TCHAR_TO_UTF8(*prop->GetName()), TCHAR_TO_UTF8(*prop->GetClass()->GetName()));
-			}
-		}
-		else if (kwargs)
-		{
-			char *prop_name = TCHAR_TO_UTF8(*prop->GetName());
-			PyObject *dict_value = PyDict_GetItemString(kwargs, prop_name);
-			if (dict_value)
-			{
-				if (!ue_py_convert_pyobject(dict_value, prop, buffer, 0))
-				{
-					py_ue_destroy_params(u_function, buffer);
-					return PyErr_Format(PyExc_TypeError, "unable to convert pyobject to property %s (%s)", TCHAR_TO_UTF8(*prop->GetName()), TCHAR_TO_UTF8(*prop->GetClass()->GetName()));
-				}
-			}
-		}
-		if (prop->HasAnyPropertyFlags(CPF_OutParm) && (prop->IsA<UArrayProperty>() || prop->HasAnyPropertyFlags(CPF_ConstParm) == false))
-		{
-			has_out_params++;
-		}
-		argn++;
-	}
+        if ((PArgs->PropertyFlags & (CPF_Parm|CPF_ReturnParm)) == CPF_Parm)
+        {
+		    UProperty *prop = *PArgs;
+		    if (argn < tuple_len)
+		    {
+			    PyObject *py_arg = PyTuple_GetItem(args, argn);
+			    if (!py_arg)
+			    {
+				    py_ue_destroy_params(u_function, buffer);
+				    return PyErr_Format(PyExc_TypeError, "unable to get pyobject for property %s", TCHAR_TO_UTF8(*prop->GetName()));
+			    }
+			    if (!ue_py_convert_pyobject(py_arg, prop, buffer, 0))
+			    {
+				    py_ue_destroy_params(u_function, buffer);
+				    return PyErr_Format(PyExc_TypeError, "unable to convert pyobject to property %s (%s)", TCHAR_TO_UTF8(*prop->GetName()), TCHAR_TO_UTF8(*prop->GetClass()->GetName()));
+			    }
+		    }
+		    else if (kwargs)
+		    {
+			    char *prop_name = TCHAR_TO_UTF8(*prop->GetName());
+			    PyObject *dict_value = PyDict_GetItemString(kwargs, prop_name);
+			    if (dict_value)
+			    {
+				    if (!ue_py_convert_pyobject(dict_value, prop, buffer, 0))
+				    {
+					    py_ue_destroy_params(u_function, buffer);
+					    return PyErr_Format(PyExc_TypeError, "unable to convert pyobject to property %s (%s)", TCHAR_TO_UTF8(*prop->GetName()), TCHAR_TO_UTF8(*prop->GetClass()->GetName()));
+				    }
+			    }
+		    }
+		    if (prop->HasAnyPropertyFlags(CPF_OutParm) && (prop->IsA<UArrayProperty>() || prop->HasAnyPropertyFlags(CPF_ConstParm) == false))
+		    {
+			    has_out_params++;
+		    }
+		    argn++;
+	    }
+    }
 
 	FScopeCycleCounterUObject ObjectScope(u_obj);
 	FScopeCycleCounterUObject FunctionScope(u_function);

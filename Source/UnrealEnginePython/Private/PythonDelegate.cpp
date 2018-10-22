@@ -34,23 +34,29 @@ void UPythonDelegate::ProcessEvent(UFunction *function, void *Parms)
 	if (signature_set)
 	{
 		Py_ssize_t argn = 0;        
-        for (TFieldIterator<UProperty> PArgs(signature); PArgs && argn < signature->NumParms && ((PArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++PArgs)
-        { argn++; }
+        for (TFieldIterator<UProperty> PArgs(signature); PArgs && argn < signature->NumParms && PArgs->HasAnyPropertyFlags(CPF_Parm); ++PArgs)
+        { 
+            if ((PArgs->PropertyFlags & (CPF_Parm|CPF_ReturnParm)) == CPF_Parm)
+            { argn++; }
+        }
         
 		py_args = PyTuple_New(argn);
         argn = 0;
-		for (TFieldIterator<UProperty> PArgs(signature); PArgs && argn < signature->NumParms && ((PArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++PArgs)
+		for (TFieldIterator<UProperty> PArgs(signature); PArgs && argn < signature->NumParms && PArgs->HasAnyPropertyFlags(CPF_Parm); ++PArgs)
 		{
-			UProperty *prop = *PArgs;
-			PyObject *arg = ue_py_convert_property(prop, (uint8 *)Parms, 0);
-			if (!arg)
-			{
-				unreal_engine_py_log_error();
-				Py_DECREF(py_args);
-				return;
-			}
-			PyTuple_SetItem(py_args, argn, arg);
-			argn++;
+            if ((PArgs->PropertyFlags & (CPF_Parm|CPF_ReturnParm)) == CPF_Parm)
+            {
+			    UProperty *prop = *PArgs;
+			    PyObject *arg = ue_py_convert_property(prop, (uint8 *)Parms, 0);
+			    if (!arg)
+			    {
+				    unreal_engine_py_log_error();
+				    Py_DECREF(py_args);
+				    return;
+			    }
+			    PyTuple_SetItem(py_args, argn, arg);
+			    argn++;
+            }
 		}
 	}
 

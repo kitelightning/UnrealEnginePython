@@ -36,5 +36,6 @@ PyObject *py_ue_world_create_folder(ue_PyUObject *, PyObject *);
 PyObject *py_ue_world_delete_folder(ue_PyUObject *, PyObject *);
 PyObject *py_ue_world_rename_folder(ue_PyUObject *, PyObject *);
 PyObject *py_ue_world_folders(ue_PyUObject *, PyObject *);
+PyObject *py_ue_get_level_script_blueprint(ue_PyUObject *, PyObject *);
 #endif
 

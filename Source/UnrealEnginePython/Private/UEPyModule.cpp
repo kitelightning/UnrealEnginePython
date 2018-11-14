@@ -674,6 +674,12 @@ static PyMethodDef ue_PyUObject_methods[] = {
 #if WITH_EDITOR
 	{ "get_thumbnail", (PyCFunction)py_ue_get_thumbnail, METH_VARARGS, "" },
 	{ "render_thumbnail", (PyCFunction)py_ue_render_thumbnail, METH_VARARGS, "" },
+	{"get_metadata_tag", (PyCFunction)py_ue_get_metadata_tag, METH_VARARGS, "" },
+	{"set_metadata_tag", (PyCFunction)py_ue_set_metadata_tag, METH_VARARGS, "" },
+	{ "metadata_tags", (PyCFunction)py_ue_metadata_tags, METH_VARARGS, "" },
+	{ "has_metadata_tag", (PyCFunction)py_ue_has_metadata_tag, METH_VARARGS, "" },
+	{"remove_metadata_tag", (PyCFunction)py_ue_remove_metadata_tag, METH_VARARGS, "" },
+
 #endif
 
 // Config
@@ -948,6 +954,7 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "set_current_level", (PyCFunction)py_ue_set_current_level, METH_VARARGS, "" },
 
 #if WITH_EDITOR
+	{ "get_level_script_blueprint", (PyCFunction)py_ue_get_level_script_blueprint, METH_VARARGS, "" },
 	{ "add_foliage_asset", (PyCFunction)py_ue_add_foliage_asset, METH_VARARGS, "" },
 	{ "get_foliage_instances", (PyCFunction)py_ue_get_foliage_instances, METH_VARARGS, "" },
 #endif
@@ -1129,6 +1136,7 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "texture_set_data", (PyCFunction)py_ue_texture_set_data, METH_VARARGS, "" },
 	{ "texture_get_width", (PyCFunction)py_ue_texture_get_width, METH_VARARGS, "" },
 	{ "texture_get_height", (PyCFunction)py_ue_texture_get_height, METH_VARARGS, "" },
+	{ "texture_has_alpha_channel", (PyCFunction)py_ue_texture_has_alpha_channel, METH_VARARGS, "" },
 	{ "render_target_get_data", (PyCFunction)py_ue_render_target_get_data, METH_VARARGS, "" },
 	{ "render_target_get_data_to_buffer", (PyCFunction)py_ue_render_target_get_data_to_buffer, METH_VARARGS, "" },
 	{ "texture_update_resource", (PyCFunction)py_ue_texture_update_resource, METH_VARARGS, "" },
@@ -1144,6 +1152,8 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "sequencer_get_camera_cut_track", (PyCFunction)py_ue_sequencer_get_camera_cut_track, METH_VARARGS, "" },
 #if WITH_EDITOR
 	{ "sequencer_set_playback_range", (PyCFunction)py_ue_sequencer_set_playback_range, METH_VARARGS, "" },
+	{ "sequencer_set_view_range", (PyCFunction)py_ue_sequencer_set_view_range, METH_VARARGS, "" },
+	{ "sequencer_set_working_range", (PyCFunction)py_ue_sequencer_set_working_range, METH_VARARGS, "" },
 	{ "sequencer_set_section_range", (PyCFunction)py_ue_sequencer_set_section_range, METH_VARARGS, "" },
 	{ "sequencer_folders", (PyCFunction)py_ue_sequencer_folders, METH_VARARGS, "" },
 	{ "sequencer_create_folder", (PyCFunction)py_ue_sequencer_create_folder, METH_VARARGS, "" },
@@ -1211,6 +1221,8 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "static_mesh_generate_kdop10z", (PyCFunction)py_ue_static_mesh_generate_kdop10z, METH_VARARGS, "" },
 	{ "static_mesh_generate_kdop18", (PyCFunction)py_ue_static_mesh_generate_kdop18, METH_VARARGS, "" },
 	{ "static_mesh_generate_kdop26", (PyCFunction)py_ue_static_mesh_generate_kdop26, METH_VARARGS, "" },
+
+	{ "static_mesh_import_lod", (PyCFunction)py_ue_static_mesh_import_lod, METH_VARARGS, "" },
 
 #endif
 
@@ -1995,10 +2007,10 @@ ue_PyUObject *ue_get_python_uobject(UObject *ue_obj)
 		UE_LOG(LogPython, Warning, TEXT("CREATED UPyObject at %p for %p %s"), ue_py_object, ue_obj, *ue_obj->GetName());
 #endif
 		return ue_py_object;
-		}
+	}
 	return ret;
 
-	}
+}
 
 ue_PyUObject *ue_get_python_uobject_inc(UObject *ue_obj)
 {
@@ -3107,8 +3119,8 @@ PyObject *py_ue_ufunction_call(UFunction *u_function, UObject *u_obj, PyObject *
 #endif
 			}
 #endif
-			}
 		}
+	}
 
 
 	Py_ssize_t tuple_len = PyTuple_Size(args);
@@ -3224,7 +3236,7 @@ PyObject *py_ue_ufunction_call(UFunction *u_function, UObject *u_obj, PyObject *
 		return ret;
 
 	Py_RETURN_NONE;
-	}
+}
 
 
 PyObject *ue_bind_pyevent(ue_PyUObject *u_obj, FString event_name, PyObject *py_callable, bool fail_on_wrong_property)
@@ -3286,8 +3298,8 @@ UFunction *unreal_engine_add_function(UClass *u_class, char *name, PyObject *py_
 		{
 			UE_LOG(LogPython, Error, TEXT("function %s is already registered"), UTF8_TO_TCHAR(name));
 			return nullptr;
+		}
 	}
-}
 
 	UPythonFunction *function = NewObject<UPythonFunction>(u_class, UTF8_TO_TCHAR(name), RF_Public | RF_Transient | RF_MarkAsNative);
 	function->SetPyCallable(py_callable);
@@ -3608,7 +3620,7 @@ UFunction *unreal_engine_add_function(UClass *u_class, char *name, PyObject *py_
 #endif
 
 	return function;
-	}
+}
 
 FGuid *ue_py_check_fguid(PyObject *py_obj)
 {

@@ -232,7 +232,11 @@ static PyObject *py_ue_destroy_window_immediately(PyObject *cls, PyObject * args
 static PyObject *py_ue_create(PyObject *cls, PyObject * args)
 {
 #if ENGINE_MINOR_VERSION > 18
+#if ENGINE_MINOR_VERSION > 20
+	FSlateApplication::InitHighDPI(true);
+#else
 	FSlateApplication::InitHighDPI();
+#endif
 #endif
 	FSlateApplication::Create();
 

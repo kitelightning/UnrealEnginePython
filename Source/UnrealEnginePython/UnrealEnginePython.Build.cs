@@ -3,6 +3,7 @@
 using UnrealBuildTool;
 using System.IO;
 using System.Collections.Generic;
+using Tools.DotNETCommon;
 
 public class UnrealEnginePython : ModuleRules
 {
@@ -323,10 +324,18 @@ public class UnrealEnginePython : ModuleRules
     {
         // insert the PYTHONHOME content as the first known path
         List<string> paths = new List<string>(knownPaths);
+
         paths.Insert(0, Path.Combine(ModuleDirectory, "../../Binaries", binaryPath));
         string environmentPath = System.Environment.GetEnvironmentVariable("PYTHONHOME");
+
         if (!string.IsNullOrEmpty(environmentPath))
-            paths.Insert(0, environmentPath);
+        { paths.Insert(0, environmentPath); }
+
+        string relativeHomePath = "";
+        ConfigHierarchy pluginIni = ConfigCache.ReadHierarchy(ConfigHierarchyType.Engine, Target.ProjectFile.Directory, Target.Platform);
+        pluginIni.GetString("Python", "RelativeHome", out relativeHomePath);
+        if (!string.IsNullOrEmpty(relativeHomePath))
+        { paths.Insert(0, Path.Combine(EngineDirectory, relativeHomePath)); }
 
         foreach (string path in paths)
         {

@@ -16,6 +16,9 @@
 #else
 #include "Private/LevelSequenceEditorToolkit.h"
 #endif
+#if ENGINE_MINOR_VERSION >= 21
+#include "MovieSceneToolHelpers.h"
+#endif
 #include "Tracks/MovieSceneCameraCutTrack.h"
 #if ENGINE_MINOR_VERSION < 20
 #include "Sections/IKeyframeSection.h"
@@ -75,37 +78,36 @@ static bool magic_get_frame_number(UMovieScene *MovieScene, PyObject *py_obj, FF
 }
 
 #if WITH_EDITOR
-static void ImportTransformChannel(const FInterpCurveFloat& Source, FMovieSceneFloatChannel* Dest, FFrameRate DestFrameRate, bool bNegateTangents)
+static void ImportTransformChannel(const FRichCurve& Source, FMovieSceneFloatChannel* Dest, FFrameRate DestFrameRate, bool bNegateTangents)
 {
 	TMovieSceneChannelData<FMovieSceneFloatValue> ChannelData = Dest->GetData();
 	ChannelData.Reset();
 	double DecimalRate = DestFrameRate.AsDecimal();
-	for (int32 KeyIndex = 0; KeyIndex < Source.Points.Num(); ++KeyIndex)
+
+    for (auto SourceIt = Source.GetKeyHandleIterator(); SourceIt; ++SourceIt)
 	{
-		float ArriveTangent = Source.Points[KeyIndex].ArriveTangent;
-		if (KeyIndex > 0)
+		const FRichCurveKey &Key = Source.GetKey(SourceIt.Key());
+		float ArriveTangent = Key.ArriveTangent;
+		FKeyHandle PrevKeyHandle = Source.GetPreviousKey(SourceIt.Key());
+		if (Source.IsKeyHandleValid(PrevKeyHandle))
 		{
-			ArriveTangent = ArriveTangent / ((Source.Points[KeyIndex].InVal - Source.Points[KeyIndex-1].InVal) * DecimalRate);
+			const FRichCurveKey &PrevKey = Source.GetKey(PrevKeyHandle);
+			ArriveTangent = ArriveTangent / ((Key.Time - PrevKey.Time) * DecimalRate);
+
 		}
-		
-		float LeaveTangent = Source.Points[KeyIndex].LeaveTangent;
-		if (KeyIndex < Source.Points.Num() - 1)
+		float LeaveTangent = Key.LeaveTangent;
+		FKeyHandle NextKeyHandle = Source.GetNextKey(SourceIt.Key());
+		if (Source.IsKeyHandleValid(NextKeyHandle))
 		{
-			LeaveTangent = LeaveTangent / ((Source.Points[KeyIndex+1].InVal - Source.Points[KeyIndex].InVal) * DecimalRate);
+			const FRichCurveKey &NextKey = Source.GetKey(NextKeyHandle);
+			LeaveTangent = LeaveTangent / ((NextKey.Time - Key.Time) * DecimalRate);
 		}
 
-		if (bNegateTangents)
-		{
-			ArriveTangent = -ArriveTangent;
-			LeaveTangent = -LeaveTangent;
-		}
-
-		FFrameNumber KeyTime = (Source.Points[KeyIndex].InVal * DestFrameRate).RoundToFrame();
-#if ENGINE_MINOR_VERSION > 20
-		FMatineeImportTools::SetOrAddKey(ChannelData, KeyTime, Source.Points[KeyIndex].OutVal, ArriveTangent, LeaveTangent, Source.Points[KeyIndex].InterpMode, DestFrameRate);
-#else
-		FMatineeImportTools::SetOrAddKey(ChannelData, KeyTime, Source.Points[KeyIndex].OutVal, ArriveTangent, LeaveTangent, Source.Points[KeyIndex].InterpMode);
-#endif
+		FFrameNumber KeyTime = (Key.Time * DestFrameRate).RoundToFrame();
+        const float negateScale = bNegateTangents ? -1 : 1;
+		FMatineeImportTools::SetOrAddKey(ChannelData, KeyTime, Key.Value, negateScale * ArriveTangent, negateScale * LeaveTangent,
+			MovieSceneToolHelpers::RichCurveInterpolationToMatineeInterpolation(Key.InterpMode, Key.TangentMode), DestFrameRate, Key.TangentWeightMode,
+			Key.ArriveTangentWeight, Key.LeaveTangentWeight);
 	}
 
 	Dest->AutoSetTangents();
@@ -116,11 +118,11 @@ static bool ImportFBXTransform(FString NodeName, UMovieScene3DTransformSection* 
 
 
 	// Look for transforms explicitly
-	FInterpCurveFloat Translation[3];
-	FInterpCurveFloat EulerRotation[3];
-	FInterpCurveFloat Scale[3];
+    FRichCurve Translation[3];
+    FRichCurve EulerRotation[3];
+    FRichCurve Scale[3];
 	FTransform DefaultTransform;
-	CurveAPI.GetConvertedTransformCurveData(NodeName, Translation[0], Translation[1], Translation[2], EulerRotation[0], EulerRotation[1], EulerRotation[2], Scale[0], Scale[1], Scale[2], DefaultTransform);
+    CurveAPI.GetConvertedTransformCurveData(NodeName, Translation[0], Translation[1], Translation[2], EulerRotation[0], EulerRotation[1], EulerRotation[2], Scale[0], Scale[1], Scale[2], DefaultTransform);
 
 	TransformSection->Modify();
 
@@ -1662,9 +1664,9 @@ PyObject *py_ue_sequencer_import_fbx_transform(ue_PyUObject *self, PyObject * ar
 			continue;
 
 		// Look for transforms explicitly
-		FInterpCurveFloat Translation[3];
-		FInterpCurveFloat EulerRotation[3];
-		FInterpCurveFloat Scale[3];
+        FRichCurve Translation[3];
+        FRichCurve EulerRotation[3];
+        FRichCurve Scale[3];
 		FTransform DefaultTransform;
 #if ENGINE_MINOR_VERSION >= 18
 		CurveAPI.GetConvertedTransformCurveData(NodeName, Translation[0], Translation[1], Translation[2], EulerRotation[0], EulerRotation[1], EulerRotation[2], Scale[0], Scale[1], Scale[2], DefaultTransform);

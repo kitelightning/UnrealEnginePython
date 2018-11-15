@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "Runtime/Foliage/Public/InstancedFoliageActor.h"
 
+#if WITH_EDITOR
 #define get_instance(x) FFoliageInstance *instance = get_foliage_instance(x);\
 	if (!instance)\
 		return nullptr;
@@ -63,7 +64,7 @@ static int py_ue_ffoliage_instance_set_location(ue_PyFFoliageInstance *self, PyO
 			instances.Add(self->instance_id);
 			FFoliageMeshInfo& info = self->foliage_actor->FoliageMeshes[self->foliage_type.Get()].Get();
 			info.PreMoveInstances(self->foliage_actor.Get(), instances);
-			instance->Location = vec->vec;
+			instance->Location = py_ue_fvector_get(vec);
 			info.PostMoveInstances(self->foliage_actor.Get(), instances);
 			return 0;
 		}
@@ -84,7 +85,7 @@ static int py_ue_ffoliage_instance_set_rotation(ue_PyFFoliageInstance *self, PyO
 			instances.Add(self->instance_id);
 			FFoliageMeshInfo& info = self->foliage_actor->FoliageMeshes[self->foliage_type.Get()].Get();
 			info.PreMoveInstances(self->foliage_actor.Get(), instances);
-			instance->Rotation = rot->rot;
+			instance->Rotation = py_ue_frotator_get(rot);
 			info.PostMoveInstances(self->foliage_actor.Get(), instances);
 			return 0;
 		}
@@ -190,7 +191,7 @@ static PyObject *py_ue_ffoliage_instance_align_to_normal(ue_PyFFoliageInstance *
 		return PyErr_Format(PyExc_Exception, "argument is not an FVector");
 	}
 
-	instance->AlignToNormal(vec->vec, align_max_angle);
+    instance->AlignToNormal(py_ue_fvector_get(vec), align_max_angle);
 
 	Py_RETURN_NONE;
 }
@@ -258,3 +259,4 @@ PyObject *py_ue_new_ffoliage_instance(AInstancedFoliageActor *foliage_actor, UFo
 	ret->instance_id = instance_id;
 	return (PyObject *)ret;
 }
+#endif

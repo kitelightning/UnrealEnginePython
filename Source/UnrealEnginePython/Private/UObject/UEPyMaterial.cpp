@@ -12,6 +12,7 @@
 #include "MaterialShared.h"
 #include "Materials/Material.h"
 
+#if WITH_EDITOR
 PyObject *py_ue_get_material_sampler_count(ue_PyUObject *self, PyObject * args)
 {
 	ue_py_check(self);
@@ -44,6 +45,7 @@ PyObject *py_ue_get_material_sampler_count(ue_PyUObject *self, PyObject * args)
 
 	return PyLong_FromLong(sampler_count);
 }
+#endif
 
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInstanceDynamic.h"

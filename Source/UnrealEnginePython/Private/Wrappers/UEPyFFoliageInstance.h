@@ -3,6 +3,7 @@
 
 #include "InstancedFoliage.h"
 
+#if WITH_EDITOR
 typedef struct 
 {
 	PyObject_HEAD
@@ -14,3 +15,5 @@ typedef struct
 void ue_python_init_ffoliage_instance(PyObject *);
 
 PyObject *py_ue_new_ffoliage_instance(AInstancedFoliageActor *foliage_actor, UFoliageType *foliage_type, int32 instance_id);
+
+#endif

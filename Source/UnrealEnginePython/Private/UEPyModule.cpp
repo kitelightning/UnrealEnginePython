@@ -1202,13 +1202,13 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "set_material_static_switch_parameter", (PyCFunction)py_ue_set_material_static_switch_parameter, METH_VARARGS, "" },
 	{ "set_material_vector_parameter", (PyCFunction)py_ue_set_material_vector_parameter, METH_VARARGS, "" },
 	{ "set_material_texture_parameter", (PyCFunction)py_ue_set_material_texture_parameter, METH_VARARGS, "" },
-	{ "get_material_sampler_count", (PyCFunction)py_ue_get_material_sampler_count, METH_VARARGS, "" },
 	{ "get_material_scalar_parameter", (PyCFunction)py_ue_get_material_scalar_parameter, METH_VARARGS, "" },
 	{ "get_material_vector_parameter", (PyCFunction)py_ue_get_material_vector_parameter, METH_VARARGS, "" },
 	{ "get_material_texture_parameter", (PyCFunction)py_ue_get_material_texture_parameter, METH_VARARGS, "" },
 	{ "get_material_static_switch_parameter", (PyCFunction)py_ue_get_material_static_switch_parameter, METH_VARARGS, "" },
 	{ "create_material_instance_dynamic", (PyCFunction)py_ue_create_material_instance_dynamic, METH_VARARGS, "" },
 #if WITH_EDITOR
+	{ "get_material_sampler_count", (PyCFunction)py_ue_get_material_sampler_count, METH_VARARGS, "" },
 	{ "get_material_instruction_count", (PyCFunction)py_ue_get_material_instruction_count, METH_VARARGS, "" },
 	{ "set_material_parent", (PyCFunction)py_ue_set_material_parent, METH_VARARGS, "" },
 	{ "static_mesh_set_collision_for_lod", (PyCFunction)py_ue_static_mesh_set_collision_for_lod, METH_VARARGS, "" },
@@ -1833,9 +1833,9 @@ void unreal_engine_init_py_module()
 	ue_python_init_enumsimporter(new_unreal_engine_module);
 	ue_python_init_ustructsimporter(new_unreal_engine_module);
 
+#if WITH_EDITOR
 	ue_python_init_ffoliage_instance(new_unreal_engine_module);
 
-#if WITH_EDITOR
 	ue_python_init_fslowtask(new_unreal_engine_module);
 	ue_python_init_swidget(new_unreal_engine_module);
 	ue_python_init_farfilter(new_unreal_engine_module);

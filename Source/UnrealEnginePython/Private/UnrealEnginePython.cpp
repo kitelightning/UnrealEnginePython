@@ -392,9 +392,7 @@ void FUnrealEnginePythonModule::StartupModule()
 	{
 		FPlatformMisc::SetEnvironmentVar(TEXT("PYTHONHOME"), *PythonHome);
 
-		const int32 MaxPathVarLen = 32768;
-		FString OrigPathVar = FString::ChrN(MaxPathVarLen, TEXT('\0'));
-		FPlatformMisc::GetEnvironmentVariable(TEXT("PATH"), OrigPathVar.GetCharArray().GetData(), MaxPathVarLen);
+		FString OrigPathVar = FPlatformMisc::GetEnvironmentVariable(TEXT("PATH"));		
 
 		// Get the current path and remove elements with python in them, we don't want any conflicts
 		const TCHAR* PathDelimiter = FPlatformMisc::GetPathVarDelimiter();

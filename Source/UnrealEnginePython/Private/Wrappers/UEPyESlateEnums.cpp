@@ -15,6 +15,7 @@
 #include "RHIDefinitions.h"
 #include "SceneTypes.h"
 #include "Framework/Layout/Overscroll.h"
+#include "Framework/MultiBox/MultiBoxExtender.h"
 
 
 static PyGetSetDef ue_PyESlateEnums_getseters[] = {

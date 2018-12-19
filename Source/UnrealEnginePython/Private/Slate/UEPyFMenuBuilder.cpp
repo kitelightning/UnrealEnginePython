@@ -1,6 +1,7 @@
 #include "UEPyFMenuBuilder.h"
 
 #include "Wrappers/UEPyESlateEnums.h"
+#include "Framework/Application/SlateApplication.h"
 
 static PyObject *py_ue_fmenu_builder_begin_section(ue_PyFMenuBuilder *self, PyObject * args)
 {

@@ -30,6 +30,7 @@
 
 #include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
 #include "Runtime/CoreUObject/Public/UObject/UObjectIterator.h"
+#include "Misc/ConfigCacheIni.h"
 
 PyObject *py_unreal_engine_log(PyObject * self, PyObject * args)
 {

@@ -2,6 +2,7 @@
 
 using UnrealBuildTool;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Tools.DotNETCommon;
 
@@ -320,6 +321,24 @@ public class UnrealEnginePython : ModuleRules
         return !IsRooted;
     }
 
+    /// <summary>
+    /// Regex that matches environment variables in $(Variable) format.
+    /// </summary>
+    static Regex EnvironmentVariableRegex = new Regex("\\$\\(([\\d\\w]+)\\)");
+
+    /// <summary>
+    /// Replaces the environment variables references in a string with their values.
+    /// </summary>
+    public static string UEExpandEnvironmentVariables(string Text)
+    {
+        foreach (Match EnvironmentVariableMatch in EnvironmentVariableRegex.Matches(Text))
+        {
+            string VariableValue = System.Environment.GetEnvironmentVariable(EnvironmentVariableMatch.Groups[1].Value);
+            Text = Text.Replace(EnvironmentVariableMatch.Value, VariableValue);
+        }
+        return Text;
+    }
+
     private string DiscoverPythonPath(string[] knownPaths, string binaryPath)
     {
         // insert the PYTHONHOME content as the first known path
@@ -331,11 +350,23 @@ public class UnrealEnginePython : ModuleRules
         if (!string.IsNullOrEmpty(environmentPath))
         { paths.Insert(0, environmentPath); }
 
-        string relativeHomePath = "";
-        ConfigHierarchy pluginIni = ConfigCache.ReadHierarchy(ConfigHierarchyType.Engine, Target.ProjectFile.Directory, Target.Platform);
-        pluginIni.GetString("Python", "RelativeHome", out relativeHomePath);
-        if (!string.IsNullOrEmpty(relativeHomePath))
-        { paths.Insert(0, Path.Combine(EngineDirectory, relativeHomePath)); }
+        {
+            string absoluteHomePath = "";
+            ConfigHierarchy pluginIni = ConfigCache.ReadHierarchy(ConfigHierarchyType.Engine, Target.ProjectFile.Directory, Target.Platform);
+            pluginIni.GetString("Python", "Home", out absoluteHomePath);
+            absoluteHomePath = UEExpandEnvironmentVariables(absoluteHomePath);
+            if (!string.IsNullOrEmpty(absoluteHomePath))
+            { paths.Insert(0, absoluteHomePath); }
+        }
+
+        {
+            string relativeHomePath = "";
+            ConfigHierarchy pluginIni = ConfigCache.ReadHierarchy(ConfigHierarchyType.Engine, Target.ProjectFile.Directory, Target.Platform);
+            pluginIni.GetString("Python", "RelativeHome", out relativeHomePath);
+            relativeHomePath = UEExpandEnvironmentVariables(relativeHomePath);
+            if (!string.IsNullOrEmpty(relativeHomePath))
+            { paths.Insert(0, Path.Combine(EngineDirectory, relativeHomePath)); }
+        }
 
         foreach (string path in paths)
         {

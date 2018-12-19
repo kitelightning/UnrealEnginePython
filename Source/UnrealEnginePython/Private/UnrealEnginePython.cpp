@@ -42,6 +42,7 @@ const char *ue4_module_options = "linux_global_symbols";
 #include "Android/AndroidApplication.h"
 #endif
 #include "ConsoleManager/UEPyIConsoleManager.h"
+#include "Internationalization/Regex.h"
 
 
 const char *UEPyUnicode_AsUTF8(PyObject *py_str)
@@ -238,12 +239,27 @@ FPythonSmartConsoleDelegatePair::FPythonSmartConsoleDelegatePair(IConsoleObject 
 
 void FUnrealEnginePythonModule::StartupModule()
 {
+	auto expandEnvVars = [](const FString& InEnvStr)
+	{
+		FRegexPattern Pattern(FString(TEXT("\\$\\(([A-Za-z0-9_]+)\\)")));
+		FRegexMatcher Matcher(Pattern, InEnvStr);
+		FString expandedResult = InEnvStr;
+		while (Matcher.FindNext())
+		{
+			const FString EnvVar = Matcher.GetCaptureGroup(1);
+			const FString EnvVarValue = FPlatformMisc::GetEnvironmentVariable(*EnvVar);
+			expandedResult.ReplaceInline(*FString::Printf(TEXT("$(%s)"), *EnvVar), *EnvVarValue, ESearchCase::IgnoreCase);
+		}
+		return expandedResult;
+	};
+
 	BrutalFinalize = false;
 
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	FString PythonHome;
 	if (GConfig->GetString(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("Home"), PythonHome, GEngineIni))
 	{
+		PythonHome = expandEnvVars(PythonHome);
 #if PY_MAJOR_VERSION >= 3
 		wchar_t *home = (wchar_t *)*PythonHome;
 #else
@@ -262,6 +278,8 @@ void FUnrealEnginePythonModule::StartupModule()
 
 	if (GConfig->GetString(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("RelativeHome"), PythonHome, GEngineIni))
 	{
+		PythonHome = expandEnvVars(PythonHome);
+
         if (FPaths::DirectoryExists(FPaths::Combine(*PROJECT_CONTENT_DIR, *PythonHome)) )
         {
             PythonHome = FPaths::Combine(*PROJECT_CONTENT_DIR, *PythonHome);
@@ -299,6 +317,8 @@ void FUnrealEnginePythonModule::StartupModule()
 	FString IniValue;
 	if (GConfig->GetString(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("ProgramName"), IniValue, GEngineIni))
 	{
+		IniValue = expandEnvVars(IniValue);
+		FPaths::NormalizeFilename(IniValue);
 #if PY_MAJOR_VERSION >= 3
 		wchar_t *program_name = (wchar_t *)*IniValue;
 #else
@@ -309,6 +329,8 @@ void FUnrealEnginePythonModule::StartupModule()
 
 	if (GConfig->GetString(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("RelativeProgramName"), IniValue, GEngineIni))
 	{
+		IniValue = expandEnvVars(IniValue);
+
 		IniValue = FPaths::Combine(*PROJECT_CONTENT_DIR, *IniValue);
 		FPaths::NormalizeFilename(IniValue);
 		IniValue = FPaths::ConvertRelativePathToFull(IniValue);
@@ -533,7 +555,7 @@ void FUnrealEnginePythonModule::StartupModule()
 
 	// release the GIL
 	PyThreadState *UEPyGlobalState = PyEval_SaveThread();
-	}
+}
 
 void FUnrealEnginePythonModule::ShutdownModule()
 {

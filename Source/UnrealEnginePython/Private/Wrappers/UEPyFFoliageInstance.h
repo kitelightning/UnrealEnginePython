@@ -1,9 +1,9 @@
 #pragma once
 #include "UnrealEnginePython.h"
 
+#if WITH_EDITOR
 #include "InstancedFoliage.h"
 
-#if WITH_EDITOR
 typedef struct 
 {
 	PyObject_HEAD

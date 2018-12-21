@@ -61,6 +61,7 @@ public:
     void OnTabActivated(TSharedRef<SDockTab> Tab, ETabActivationCause TabActivationCause);
     bool OnCanCloseTab();
     void OnPersistVisualState();
+	void SubMenuPyBuilder(FMenuBuilder &Builder);
 
 	TSharedPtr<SWidget> OnContextMenuOpening();
 	TSharedRef<SWidget> OnGenerateWidget(TSharedPtr<FPythonItem> py_item);

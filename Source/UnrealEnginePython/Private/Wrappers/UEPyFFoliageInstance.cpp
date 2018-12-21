@@ -7,6 +7,7 @@
 #include "Runtime/Foliage/Public/InstancedFoliageActor.h"
 
 #if WITH_EDITOR
+
 #define get_instance(x) FFoliageInstance *instance = get_foliage_instance(x);\
 	if (!instance)\
 		return nullptr;
@@ -14,6 +15,8 @@
 #define set_instance(x) FFoliageInstance *instance = get_foliage_instance(x);\
 	if (!instance)\
 		return -1;
+
+
 
 static FFoliageInstance* get_foliage_instance(ue_PyFFoliageInstance *self)
 {
@@ -45,6 +48,7 @@ static PyObject *ue_PyFFoliageInstance_str(ue_PyFFoliageInstance *self)
 	return PyUnicode_FromFormat("<unreal_engine.FFoliageInstance %d>",
 		self->instance_id);
 }
+
 
 static PyObject *py_ue_ffoliage_instance_get_location(ue_PyFFoliageInstance *self, void *closure)
 {
@@ -259,4 +263,5 @@ PyObject *py_ue_new_ffoliage_instance(AInstancedFoliageActor *foliage_actor, UFo
 	ret->instance_id = instance_id;
 	return (PyObject *)ret;
 }
+
 #endif

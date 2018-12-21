@@ -92,3 +92,4 @@ Binaries/
 python35/
 python27/
 *.un~
+.vscode/

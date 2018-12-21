@@ -10,6 +10,7 @@ typedef struct {
     ue_PyUScriptStruct py_base;
 } ue_PyFTransform;
 
+extern PyTypeObject ue_PyFTransformType;
 PyObject *py_ue_new_ftransform(const FTransform&);
 PyObject *py_ue_new_ftransform_ptr(FTransform*);
 ue_PyFTransform *py_ue_is_ftransform(PyObject *);

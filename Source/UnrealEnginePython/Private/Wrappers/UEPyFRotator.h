@@ -9,6 +9,8 @@ typedef struct {
     ue_PyUScriptStruct py_base;
 } ue_PyFRotator;
 
+extern PyTypeObject ue_PyFRotatorType;
+
 PyObject *py_ue_new_frotator(const FRotator&);
 PyObject *py_ue_new_frotator_ptr(FRotator*);
 ue_PyFRotator *py_ue_is_frotator(PyObject *);

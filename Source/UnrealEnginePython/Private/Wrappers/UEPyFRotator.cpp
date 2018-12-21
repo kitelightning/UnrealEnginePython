@@ -95,7 +95,7 @@ static PyObject *ue_PyFRotator_str(ue_PyFRotator *self)
 		PyFloat_FromDouble(py_ue_frotator_get(self).Roll), PyFloat_FromDouble(py_ue_frotator_get(self).Pitch), PyFloat_FromDouble(py_ue_frotator_get(self).Yaw));
 }
 
-static PyTypeObject ue_PyFRotatorType = {
+PyTypeObject ue_PyFRotatorType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	"unreal_engine.FRotator", /* tp_name */
 	sizeof(ue_PyFRotator), /* tp_basicsize */

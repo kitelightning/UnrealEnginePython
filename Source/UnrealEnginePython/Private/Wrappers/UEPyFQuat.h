@@ -9,6 +9,7 @@ typedef struct {
     ue_PyUScriptStruct py_base;
 } ue_PyFQuat;
 
+extern PyTypeObject ue_PyFQuatType;
 PyObject *py_ue_new_fquat(const FQuat&);
 PyObject *py_ue_new_fquat_ptr(FQuat*);
 ue_PyFQuat *py_ue_is_fquat(PyObject *);

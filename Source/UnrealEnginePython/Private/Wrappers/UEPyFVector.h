@@ -10,6 +10,7 @@ typedef struct {
     ue_PyUScriptStruct py_base;
 } ue_PyFVector;
 
+extern PyTypeObject ue_PyFVectorType;
 PyObject *py_ue_new_fvector(const FVector&);
 PyObject *py_ue_new_fvector_ptr(FVector*);
 ue_PyFVector *py_ue_is_fvector(PyObject *);

@@ -53,6 +53,7 @@
 #include "Wrappers/UEPyESlateEnums.h"
 
 #include "Wrappers/UEPyFVector.h"
+#include "Wrappers/UEPyFVector2D.h"
 #include "Wrappers/UEPyFHitResult.h"
 #include "Wrappers/UEPyFRotator.h"
 #include "Wrappers/UEPyFTransform.h"
@@ -819,6 +820,7 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "vlog_cylinder", (PyCFunction)py_ue_vlog_cylinder, METH_VARARGS, "" },
 
 	// StaticMesh
+    { "get_static_mesh_bounds", (PyCFunction)py_ue_static_mesh_get_bounds, METH_VARARGS, "" },
 #if WITH_EDITOR
 	{ "static_mesh_build", (PyCFunction)py_ue_static_mesh_build, METH_VARARGS, "" },
 	{ "static_mesh_create_body_setup", (PyCFunction)py_ue_static_mesh_create_body_setup, METH_VARARGS, "" },
@@ -1794,6 +1796,7 @@ void unreal_engine_init_py_module()
 	}
 
 	ue_python_init_fvector(new_unreal_engine_module);
+	ue_python_init_fvector2d(new_unreal_engine_module);
 	ue_python_init_frotator(new_unreal_engine_module);
 	ue_python_init_ftransform(new_unreal_engine_module);
 	ue_python_init_fhitresult(new_unreal_engine_module);
@@ -2251,6 +2254,11 @@ PyObject *ue_py_convert_property(UProperty *prop, uint8 *buffer, int32 index)
 			    {
 				    return py_ue_new_fvector_ptr(casted_prop->ContainerPtrToValuePtr<FVector>(buffer, index));
 			    }
+			    if (casted_struct == TBaseStructure<FVector2D>::Get())
+    			{
+    				FVector2D vec = *casted_prop->ContainerPtrToValuePtr<FVector2D>(buffer, index);
+    				return py_ue_new_fvector2d(vec);
+    			}
 			    if (casted_struct == TBaseStructure<FRotator>::Get())
 			    {
 				    return py_ue_new_frotator_ptr(casted_prop->ContainerPtrToValuePtr<FRotator>(buffer, index));
@@ -2680,6 +2688,19 @@ bool ue_py_convert_pyobject(PyObject *py_obj, UProperty *prop, uint8 *buffer, in
 			if (casted_prop->Struct == TBaseStructure<FVector>::Get())
 			{
 				*casted_prop->ContainerPtrToValuePtr<FVector>(buffer, index) = py_ue_fvector_get(py_vec);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	if (ue_PyFVector2D *py_vec = py_ue_is_fvector2d(py_obj))
+	{
+		if (auto casted_prop = Cast<UStructProperty>(prop))
+		{
+			if (casted_prop->Struct == TBaseStructure<FVector2D>::Get())
+			{
+				*casted_prop->ContainerPtrToValuePtr<FVector2D>(buffer, index) = py_vec->vec;
 				return true;
 			}
 		}
@@ -3401,6 +3422,12 @@ UFunction *unreal_engine_add_function(UClass *u_class, char *name, PyObject *py_
 				prop_struct->Struct = TBaseStructure<FVector>::Get();
 				prop = prop_struct;
 			}
+			else if ((PyTypeObject *)value == &ue_PyFVector2DType)
+			{
+				UStructProperty *prop_struct = NewObject<UStructProperty>(function, UTF8_TO_TCHAR(p_name), RF_Public);
+				prop_struct->Struct = TBaseStructure<FVector2D>::Get();
+				prop = prop_struct;
+			}
 			else if ((PyTypeObject *)value == &ue_PyFRotatorType)
 			{
 				UStructProperty *prop_struct = NewObject<UStructProperty>(function, UTF8_TO_TCHAR(p_name), RF_Public);
@@ -3542,6 +3569,12 @@ UFunction *unreal_engine_add_function(UClass *u_class, char *name, PyObject *py_
 				{
 					UStructProperty *prop_struct = NewObject<UStructProperty>(function, UTF8_TO_TCHAR(p_name), RF_Public);
 					prop_struct->Struct = TBaseStructure<FVector>::Get();
+					prop = prop_struct;
+				}
+				else if ((PyTypeObject *)py_return_value == &ue_PyFVector2DType)
+				{
+					UStructProperty *prop_struct = NewObject<UStructProperty>(function, UTF8_TO_TCHAR(p_name), RF_Public);
+					prop_struct->Struct = TBaseStructure<FVector2D>::Get();
 					prop = prop_struct;
 				}
 				else if ((PyTypeObject *)py_return_value == &ue_PyFRotatorType)

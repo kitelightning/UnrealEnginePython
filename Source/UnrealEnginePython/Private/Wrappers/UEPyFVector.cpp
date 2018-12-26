@@ -281,7 +281,7 @@ static PyObject *ue_py_fvector_div(ue_PyFVector *self, PyObject *value)
 
 static PyObject *ue_py_fvector_floor_div(ue_PyFVector *self, PyObject *value)
 {
-	FVector vec = self->vec;
+	FVector vec = py_ue_fvector_get(self);
 	if (PyNumber_Check(value))
 	{
 		PyObject *f_value = PyNumber_Float(value);

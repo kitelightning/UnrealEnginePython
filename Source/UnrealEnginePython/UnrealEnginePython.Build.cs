@@ -339,6 +339,11 @@ public class UnrealEnginePython : ModuleRules
             { paths.Insert(0, Path.Combine(EngineDirectory, relativeHomePath)); }
         }
 
+        // look in an alternate custom location
+        environmentPath = System.Environment.GetEnvironmentVariable("UNREALENGINEPYTHONHOME");
+        if (!string.IsNullOrEmpty(environmentPath))
+            paths.Insert(0, environmentPath);
+
         foreach (string path in paths)
         {
             string actualPath = path;

@@ -5,6 +5,7 @@
 #if ENGINE_MINOR_VERSION > 13
 
 #include "Engine/StaticMesh.h"
+#include "Wrappers/UEPyFVector2D.h"
 
 static PyObject *py_ue_fraw_mesh_set_vertex_positions(ue_PyFRawMesh *self, PyObject * args)
 {
@@ -96,6 +97,10 @@ static PyObject *py_ue_fraw_mesh_set_wedge_tex_coords(ue_PyFRawMesh *self, PyObj
 				return nullptr;
 			uv.Add(FVector2D(x, y));
 		}
+        else if (ue_PyFVector2D *py_fvector2d = py_ue_is_fvector2d(item_x))
+        {
+            uv.Add(py_fvector2d->vec);
+        }
 		else
 		{
 			if (!PyNumber_Check(item_x))

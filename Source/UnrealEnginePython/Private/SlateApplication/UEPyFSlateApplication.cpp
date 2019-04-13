@@ -201,7 +201,7 @@ static PyObject *py_ue_add_window(PyObject *cls, PyObject * args)
         return PyErr_Format(PyExc_Exception, "window to add is not an SWindow");
     }
 
-    const bool showImmediately = (py_show_immediately) ? (PyObject_IsTrue(py_show_immediately)) : true;
+    const bool showImmediately = (py_show_immediately) ? ((bool)PyObject_IsTrue(py_show_immediately)) : true;
 
     FSlateApplication::Get().AddWindow(StaticCastSharedRef<SWindow>(((ue_PySWidget*)py_window)->Widget), showImmediately);
 

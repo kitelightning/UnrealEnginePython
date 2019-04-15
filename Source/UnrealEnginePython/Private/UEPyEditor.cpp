@@ -417,7 +417,7 @@ PyObject *py_unreal_engine_editor_play(PyObject * self, PyObject * args)
 	Py_END_ALLOW_THREADS;
 
 	Py_RETURN_NONE;
-	}
+}
 
 PyObject *py_unreal_engine_editor_select_actor(PyObject * self, PyObject * args)
 {
@@ -615,7 +615,7 @@ PyObject *py_unreal_engine_import_asset(PyObject * self, PyObject * args)
 	}
 
 	Py_RETURN_NONE;
-	}
+}
 
 PyObject *py_unreal_engine_editor_tick(PyObject * self, PyObject * args)
 {
@@ -988,7 +988,7 @@ PyObject *py_unreal_engine_rename_asset(PyObject * self, PyObject * args)
 #endif
 
 	Py_RETURN_NONE;
-	}
+}
 
 PyObject *py_unreal_engine_duplicate_asset(PyObject * self, PyObject * args)
 {
@@ -2071,7 +2071,11 @@ PyObject *py_unreal_engine_editor_on_asset_post_import(PyObject * self, PyObject
 		return PyErr_Format(PyExc_Exception, "object is not a callable");
 
 	TSharedRef<FPythonSmartDelegate> py_delegate = FUnrealEnginePythonHouseKeeper::Get()->NewPythonSmartDelegate(py_callable);
+#if ENGINE_MINOR_VERSION > 21
+	GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.AddSP(py_delegate, &FPythonSmartDelegate::PyFOnAssetPostImport);
+#else
 	FEditorDelegates::OnAssetPostImport.AddSP(py_delegate, &FPythonSmartDelegate::PyFOnAssetPostImport);
+#endif
 	Py_RETURN_NONE;
 }
 
@@ -2347,7 +2351,7 @@ PyObject *py_unreal_engine_add_level_to_world(PyObject *self, PyObject * args)
 #endif
 
 	Py_RETURN_UOBJECT(level_streaming);
-	}
+}
 
 PyObject *py_unreal_engine_move_selected_actors_to_level(PyObject *self, PyObject * args)
 {
@@ -2832,7 +2836,11 @@ PyObject *py_unreal_engine_gconfig_set_string(PyObject * self, PyObject * args)
 
 PyObject *py_unreal_engine_all_viewport_clients(PyObject * self, PyObject * args)
 {
+#if ENGINE_MINOR_VERSION > 21
+	TArray<FEditorViewportClient *> clients = GEditor->GetAllViewportClients();
+#else
 	TArray<FEditorViewportClient *> clients = GEditor->AllViewportClients;
+#endif
 	PyObject *py_list = PyList_New(0);
 	for (FEditorViewportClient *client : clients)
 	{
@@ -2946,5 +2954,6 @@ PyObject *py_unreal_engine_export_assets(PyObject * self, PyObject * args)
 
 	Py_RETURN_NONE;
 }
+
 #endif
 

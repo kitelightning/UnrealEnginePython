@@ -1060,7 +1060,11 @@ PyObject *py_ue_actor_get_level_sequence(ue_PyUObject * self, PyObject * args)
 	}
 
 	ULevelSequence * retSequence = nullptr;
+#if ENGINE_MINOR_VERSION > 21
+    retSequence = actor->GetSequence();
+#else
 	retSequence = actor->GetSequence(true, false);
+#endif
 
 	if (retSequence == nullptr)
 		Py_RETURN_NONE;

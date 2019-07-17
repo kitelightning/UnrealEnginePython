@@ -431,6 +431,7 @@ static PyMethodDef unreal_engine_methods[] = {
 	{ "blueprint_get_all_graphs", py_unreal_engine_blueprint_get_all_graphs, METH_VARARGS, "" },
 	{ "blueprint_mark_as_structurally_modified", py_unreal_engine_blueprint_mark_as_structurally_modified, METH_VARARGS, "" },
 	{ "add_component_to_blueprint", py_unreal_engine_add_component_to_blueprint, METH_VARARGS, "" },
+	{ "remove_component_from_blueprint", py_unreal_engine_remove_component_from_blueprint, METH_VARARGS, "" },
 	{ "get_blueprint_components", py_unreal_engine_get_blueprint_components, METH_VARARGS, "" },
 	{ "create_material_instance", py_unreal_engine_create_material_instance, METH_VARARGS, "" },
 	{ "message_dialog_open", py_unreal_engine_message_dialog_open, METH_VARARGS, "" },
@@ -730,6 +731,9 @@ static PyMethodDef ue_PyUObject_methods[] = {
 	{ "graph_add_node_dynamic_cast", (PyCFunction)py_ue_graph_add_node_dynamic_cast, METH_VARARGS, "" },
 	{ "graph_add_node_event", (PyCFunction)py_ue_graph_add_node_event, METH_VARARGS, "" },
 	{ "graph_get_good_place_for_new_node", (PyCFunction)py_ue_graph_get_good_place_for_new_node, METH_VARARGS, "" },
+
+	{ "graph_reconstruct_node", (PyCFunction)py_ue_graph_reconstruct_node, METH_VARARGS, "" },
+	{ "graph_remove_node", (PyCFunction)py_ue_graph_remove_node, METH_VARARGS, "" },
 
 	{ "node_pins", (PyCFunction)py_ue_node_pins, METH_VARARGS, "" },
 	{ "node_get_title", (PyCFunction)py_ue_node_get_title, METH_VARARGS, "" },

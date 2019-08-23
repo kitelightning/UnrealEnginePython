@@ -2360,6 +2360,15 @@ PyObject *ue_py_convert_property(UProperty *prop, uint8 *buffer, int32 index)
 		}
 
 		PyObject *py_list = PyList_New(0);
+        const bool bNeedsCopy = 
+               (prop->GetPropertyFlags() & (CPF_ReturnParm|CPF_OutParm)) != 0
+            && (prop->GetPropertyFlags() & (CPF_ReferenceParm         )) == 0;
+
+        if (bNeedsCopy)
+        {
+            array_prop->SetPropertyFlags(prop->GetPropertyFlags() & (CPF_ReturnParm | CPF_OutParm));
+            array_prop->ClearPropertyFlags(CPF_ReferenceParm);
+        }
 
 		for (int i = 0; i < array_helper.Num(); i++)
 		{

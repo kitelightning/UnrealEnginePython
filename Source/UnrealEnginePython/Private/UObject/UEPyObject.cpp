@@ -159,7 +159,7 @@ PyObject *py_ue_is_data_valid(ue_PyUObject * self, PyObject * args)
     ue_py_check(self);
 
     PyObject* py_validErrors = nullptr;
-    if (!PyArg_ParseTuple(args, "O:is_data_valid", &py_validErrors))
+    if (!PyArg_ParseTuple(args, "O:is_data_valid", &py_validErrors) || !py_validErrors)
     {
         return NULL;
     }

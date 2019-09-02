@@ -536,7 +536,7 @@ PyObject *py_ue_set_material_parent(ue_PyUObject *self, PyObject * args)
 	}
 
 
-	if (!ue_is_pyuobject(py_material))
+	if (!py_material || !ue_is_pyuobject(py_material))
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not a UObject");
 	}

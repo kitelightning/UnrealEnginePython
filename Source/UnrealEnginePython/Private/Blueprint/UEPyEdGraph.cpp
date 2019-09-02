@@ -37,9 +37,8 @@ PyObject *py_ue_graph_add_node_call_function(ue_PyUObject * self, PyObject * arg
 
 	UFunction *function = nullptr;
 
-	if (ue_is_pyuobject(py_function))
+	if (ue_PyUObject* py_function_obj = ue_is_pyuobject(py_function))
 	{
-		ue_PyUObject *py_function_obj = (ue_PyUObject *)py_function;
 		if (py_function_obj->ue_object->IsA<UFunction>())
 		{
 			function = (UFunction *)py_function_obj->ue_object;
@@ -49,9 +48,8 @@ PyObject *py_ue_graph_add_node_call_function(ue_PyUObject * self, PyObject * arg
 			return PyErr_Format(PyExc_Exception, "argument is not a UObject");
 		}
 	}
-	else if (py_ue_is_callable(py_function))
+	else if (ue_PyCallable* py_callable = py_ue_is_callable(py_function))
 	{
-		ue_PyCallable *py_callable = (ue_PyCallable *)py_function;
 		function = py_callable->u_function;
 	}
 
@@ -159,7 +157,7 @@ PyObject *py_ue_graph_add_node_event(ue_PyUObject * self, PyObject * args)
 
 	UEdGraph *graph = (UEdGraph *)self->ue_object;
 
-	if (!ue_is_pyuobject(py_class))
+	if (!py_class || !ue_is_pyuobject(py_class))
 	{
 		return PyErr_Format(PyExc_Exception, "argument is not a UObject");
 	}

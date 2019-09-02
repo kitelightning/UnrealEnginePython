@@ -478,6 +478,12 @@ PyObject *py_unreal_engine_import_asset(PyObject * self, PyObject * args)
 		return nullptr;
 	}
 
+    // Make static analyzer happy
+    if (!assetsObject)
+    {
+        return nullptr;
+    }
+
 	FString Result;
 	// avoid crash on wrong path
 	if (!FPackageName::TryConvertLongPackageNameToFilename(UTF8_TO_TCHAR(destination), Result, ""))
@@ -1452,6 +1458,12 @@ PyObject *py_unreal_engine_create_blueprint(PyObject * self, PyObject * args)
 	{
 		return nullptr;
 	}
+
+    // Make static analyzer happy
+    if (name == nullptr)
+    {
+        return nullptr;
+    }
 
 	UClass *parent = UObject::StaticClass();
 

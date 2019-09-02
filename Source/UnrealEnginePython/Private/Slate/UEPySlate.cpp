@@ -336,6 +336,7 @@ void FPythonSlateDelegate::OnPersistVisualState()
     if (!ret)
     {
         unreal_engine_py_log_error();
+        return;
     }
 
 	Py_DECREF(ret);

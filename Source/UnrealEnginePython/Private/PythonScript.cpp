@@ -41,7 +41,12 @@ void UPythonScript::CallSpecificFunctionWithArgs()
 	}
 
 	PyObject *ret = PyObject_Call(function_to_call, args, nullptr);
-	Py_DECREF(args);
+    
+    if (args) 
+    {
+	    Py_DECREF(args);
+    }
+
 	if (!ret)
 	{
 		unreal_engine_py_log_error();

@@ -132,6 +132,7 @@ public:
 	FString AdditionalModulesPath;
 
 	bool BrutalFinalize;
+    static bool bHasInitInterpreter;
 
 	// pep8ize a string using various strategy (currently only autopep8 is supported)
 	FString Pep8ize(FString Code);
@@ -165,7 +166,7 @@ struct FScopePythonGIL
 	{
         //TODO: ikrimae: #ThirdParty-Python-BUG: Without this, engine crashes on exit because the destructors for 
         //             APyActor, APyHUD, etc get run after python is unloaded
-        if (GExitPurge)
+        if (GExitPurge || !FUnrealEnginePythonModule::bHasInitInterpreter)
         { return;    }
 
 		state = PyGILState_Ensure();
@@ -175,7 +176,7 @@ struct FScopePythonGIL
 	{
         //TODO: ikrimae: #ThirdParty-Python-BUG: Without this, engine crashes on exit because the destructors for 
         //             APyActor, APyHUD, etc get run after python is unloaded
-        if (GExitPurge)
+        if (GExitPurge || !FUnrealEnginePythonModule::bHasInitInterpreter)
         { return;    }
 
 		PyGILState_Release(state);

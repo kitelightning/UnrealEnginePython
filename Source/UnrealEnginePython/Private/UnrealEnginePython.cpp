@@ -263,6 +263,7 @@ void FUnrealEnginePythonModule::StartupModule()
 	};
 
 	BrutalFinalize = false;
+    FUnrealEnginePythonModule::bHasInitInterpreter = false;
 
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	FString PythonHome;
@@ -270,7 +271,7 @@ void FUnrealEnginePythonModule::StartupModule()
 	if (GConfig->GetArray(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("Home"), PythonHomeDirs, GEngineIni))
 	{
 		for (FString& PythonHomeDir : PythonHomeDirs)
-        {
+		{
 			PythonHomeDir = FPaths::ConvertRelativePathToFull(expandEnvVars(PythonHomeDir));
 	#if PY_MAJOR_VERSION >= 3
 			wchar_t* home = (wchar_t*)*PythonHomeDir;
@@ -280,14 +281,14 @@ void FUnrealEnginePythonModule::StartupModule()
 			if (FPaths::DirectoryExists(PythonHomeDir))
 			{
 				PythonHome = PythonHomeDir;
-		    FPlatformMisc::SetEnvironmentVar(TEXT("PYTHONHOME"), *PythonHome);
-		    Py_SetPythonHome(home);
-        }
+				FPlatformMisc::SetEnvironmentVar(TEXT("PYTHONHOME"), *PythonHome);
+				Py_SetPythonHome(home);
+			}
 		}
 		if (PythonHome.IsEmpty())
-        {
-            UE_LOG(LogPython, Warning, TEXT("PythonHome Directory does not exist: '%s'"), *PythonHome);
-        }
+		{
+			UE_LOG(LogPython, Warning, TEXT("PythonHome Directory does not exist: '%s'"), *PythonHome);
+		}
 	}
 
 	if (GConfig->GetString(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("RelativeHome"), PythonHome, GEngineIni))
@@ -594,6 +595,7 @@ void FUnrealEnginePythonModule::StartupModule()
 
 	// release the GIL
 	PyThreadState *UEPyGlobalState = PyEval_SaveThread();
+    FUnrealEnginePythonModule::bHasInitInterpreter = true;
 }
 
 void FUnrealEnginePythonModule::ShutdownModule()
@@ -609,6 +611,7 @@ void FUnrealEnginePythonModule::ShutdownModule()
 		PyGILState_Ensure();
 		Py_Finalize();
 	}
+    FUnrealEnginePythonModule::bHasInitInterpreter = false;
 }
 
 void FUnrealEnginePythonModule::RunString(char *str)
@@ -644,6 +647,8 @@ void FUnrealEnginePythonModule::RunFileInMainThread(char *filename)
 		});
 }
 #endif
+
+bool FUnrealEnginePythonModule::bHasInitInterpreter = false;
 
 FString FUnrealEnginePythonModule::Pep8ize(FString Code)
 {

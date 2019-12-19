@@ -12,6 +12,9 @@ public class PythonConsole : ModuleRules
 #endif
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        // @third party code - BEGIN Bebylon - #ThirdParty-Python: Add UnrealEnginePython Plugin PrivatePCH file
+        PrivatePCHHeaderFile = Path.Combine(ModuleDirectory, "Private/PythonConsolePrivatePCH.h");
+        // @third party code - END Bebylon
         string enableUnityBuild = System.Environment.GetEnvironmentVariable("UEP_ENABLE_UNITY_BUILD");
         bFasterWithoutUnity = string.IsNullOrEmpty(enableUnityBuild);
 

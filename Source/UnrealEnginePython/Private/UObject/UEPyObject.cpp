@@ -18,6 +18,8 @@
 #include "Runtime/Core/Public/Misc/OutputDeviceNull.h"
 #include "Runtime/CoreUObject/Public/Serialization/ObjectWriter.h"
 #include "Runtime/CoreUObject/Public/Serialization/ObjectReader.h"
+#include "Misc/ConfigCacheIni.h"
+#include "UObject/UObjectIterator.h"
 
 PyObject *py_ue_get_class(ue_PyUObject * self, PyObject * args)
 {

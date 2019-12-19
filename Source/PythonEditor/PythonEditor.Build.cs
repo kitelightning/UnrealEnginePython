@@ -12,6 +12,9 @@ namespace UnrealBuildTool.Rules
         {
 
             PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+            // @third party code - BEGIN Bebylon - #ThirdParty-Python: Add UnrealEnginePython Plugin PrivatePCH file
+            PrivatePCHHeaderFile = System.IO.Path.Combine(ModuleDirectory, "Private/PythonEditorPrivatePCH.h");
+            // @third party code - END Bebylon
             string enableUnityBuild = System.Environment.GetEnvironmentVariable("UEP_ENABLE_UNITY_BUILD");
             bFasterWithoutUnity = string.IsNullOrEmpty(enableUnityBuild);
 

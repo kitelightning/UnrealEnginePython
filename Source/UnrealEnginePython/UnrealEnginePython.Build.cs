@@ -303,13 +303,10 @@ public class UnrealEnginePython : ModuleRules
     /// <summary>
     /// Replaces the environment variables references in a string with their values.
     /// </summary>
-    public static string UEExpandEnvironmentVariables(string Text)
+    public string UEExpandEnvironmentVariables(string Text)
     {
-        foreach (Match EnvironmentVariableMatch in EnvironmentVariableRegex.Matches(Text))
-        {
-            string VariableValue = System.Environment.GetEnvironmentVariable(EnvironmentVariableMatch.Groups[1].Value);
-            Text = Text.Replace(EnvironmentVariableMatch.Value, VariableValue);
-        }
+        Text = Text.Replace("%GAMEDIR%", "$(GAMEDIR)");
+        Text = Utils.ExpandVariables(Text, new Dictionary<string, string>(){ { "GAMEDIR", Target.ProjectFile.Directory.ToNormalizedPath() + "/" } } );
         return Text;
     }
 
@@ -325,12 +322,15 @@ public class UnrealEnginePython : ModuleRules
         { paths.Insert(0, environmentPath); }
 
         {
-            string absoluteHomePath = "";
+            List<string> absoluteHomePaths;
             ConfigHierarchy pluginIni = ConfigCache.ReadHierarchy(ConfigHierarchyType.Engine, Target.ProjectFile.Directory, Target.Platform);
-            pluginIni.GetString("Python", "Home", out absoluteHomePath);
-            absoluteHomePath = UEExpandEnvironmentVariables(absoluteHomePath);
-            if (!string.IsNullOrEmpty(absoluteHomePath))
-            { paths.Insert(0, absoluteHomePath); }
+            pluginIni.GetArray("Python", "Home", out absoluteHomePaths);
+            foreach (string absoluteHomePath in absoluteHomePaths)
+            {
+                string expandedPath = UEExpandEnvironmentVariables(absoluteHomePath);
+                if (!string.IsNullOrEmpty(expandedPath))
+                { paths.Insert(0, expandedPath); }
+            }
         }
 
         {

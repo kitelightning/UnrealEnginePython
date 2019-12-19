@@ -266,20 +266,25 @@ void FUnrealEnginePythonModule::StartupModule()
 
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	FString PythonHome;
-	if (GConfig->GetString(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("Home"), PythonHome, GEngineIni))
+	TArray<FString> PythonHomeDirs;
+	if (GConfig->GetArray(UTF8_TO_TCHAR("Python"), UTF8_TO_TCHAR("Home"), PythonHomeDirs, GEngineIni))
 	{
-		PythonHome = expandEnvVars(PythonHome);
-#if PY_MAJOR_VERSION >= 3
-		wchar_t *home = (wchar_t *)*PythonHome;
-#else
-		char *home = TCHAR_TO_UTF8(*PythonHome);
-#endif
-        if (FPaths::DirectoryExists(PythonHome))
+		for (FString& PythonHomeDir : PythonHomeDirs)
         {
+			PythonHomeDir = FPaths::ConvertRelativePathToFull(expandEnvVars(PythonHomeDir));
+	#if PY_MAJOR_VERSION >= 3
+			wchar_t* home = (wchar_t*)*PythonHomeDir;
+	#else
+			char* home = TCHAR_TO_UTF8(*PythonHomeDir);
+	#endif
+			if (FPaths::DirectoryExists(PythonHomeDir))
+			{
+				PythonHome = PythonHomeDir;
 		    FPlatformMisc::SetEnvironmentVar(TEXT("PYTHONHOME"), *PythonHome);
 		    Py_SetPythonHome(home);
         }
-        else
+		}
+		if (PythonHome.IsEmpty())
         {
             UE_LOG(LogPython, Warning, TEXT("PythonHome Directory does not exist: '%s'"), *PythonHome);
         }
@@ -328,6 +333,9 @@ void FUnrealEnginePythonModule::StartupModule()
 	{
 		IniValue = expandEnvVars(IniValue);
 		FPaths::NormalizeFilename(IniValue);
+		IniValue = (FPaths::IsRelative(IniValue) && !PythonHome.IsEmpty()) 
+			? FPaths::ConvertRelativePathToFull(FPaths::Combine(PythonHome, IniValue)) 
+			: IniValue;
 #if PY_MAJOR_VERSION >= 3
 		wchar_t *program_name = (wchar_t *)*IniValue;
 #else

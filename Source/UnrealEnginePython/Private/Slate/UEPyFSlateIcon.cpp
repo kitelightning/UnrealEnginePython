@@ -60,6 +60,9 @@ static int ue_py_fslate_icon_init(ue_PyFSlateIcon *self, PyObject *args, PyObjec
 		return -1;
 	}
 
+    if (IsRunningDedicatedServer())
+    { return -1; }
+
 	if (style_set)
 	{
 		if (!style)

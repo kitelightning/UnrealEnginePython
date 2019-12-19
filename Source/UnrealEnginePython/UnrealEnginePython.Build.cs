@@ -225,10 +225,21 @@ public class UnrealEnginePython : ModuleRules
                 }
             }
             System.Console.WriteLine("Using Python at: " + pythonHome);
-            PublicIncludePaths.Add(pythonHome);
+            PublicSystemIncludePaths.Add(pythonHome);
             string libPath = GetWindowsPythonLibFile(pythonHome);
             PublicLibraryPaths.Add(Path.GetDirectoryName(libPath));
-            PublicAdditionalLibraries.Add(libPath);
+            //PublicAdditionalLibraries.Add(libPath);
+            //string py3DllPath = Path.Combine(pythonHome, "python3.dll");
+            //string py36DllPath = Path.Combine(pythonHome, "python36.dll");
+            //System.Console.WriteLine(py3DllPath);
+            //System.Console.WriteLine(py36DllPath);
+            //PublicDelayLoadDLLs.Add(py3DllPath); 
+            //PublicDelayLoadDLLs.Add(py36DllPath);
+            //RuntimeDependencies.Add(py3DllPath);
+            //RuntimeDependencies.Add(py36DllPath);
+            //AdditionalLinkArguments += " /NODEFAULTLIB:\"python36_d\"";
+            //AdditionalLinkArguments += " /NODEFAULTLIB:\"python3\"";
+            //AdditionalLinkArguments += " /NODEFAULTLIB:\"python36\"";
         }
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {

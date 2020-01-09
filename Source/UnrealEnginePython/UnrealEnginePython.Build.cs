@@ -224,15 +224,15 @@ public class UnrealEnginePython : ModuleRules
                     throw new System.Exception("Unable to find Python installation");
                 }
             }
-            System.Console.WriteLine("Using Python at: " + pythonHome);
+            Log.TraceInformation("Using Python at: {0}", pythonHome);
             PublicSystemIncludePaths.Add(pythonHome);
             string libPath = GetWindowsPythonLibFile(pythonHome);
             PublicLibraryPaths.Add(Path.GetDirectoryName(libPath));
             //PublicAdditionalLibraries.Add(libPath);
             //string py3DllPath = Path.Combine(pythonHome, "python3.dll");
             //string py36DllPath = Path.Combine(pythonHome, "python36.dll");
-            //System.Console.WriteLine(py3DllPath);
-            //System.Console.WriteLine(py36DllPath);
+            //Log.TraceInformation(py3DllPath);
+            //Log.TraceInformation(py36DllPath);
             //PublicDelayLoadDLLs.Add(py3DllPath); 
             //PublicDelayLoadDLLs.Add(py36DllPath);
             //RuntimeDependencies.Add(py3DllPath);
@@ -251,7 +251,7 @@ public class UnrealEnginePython : ModuleRules
                     throw new System.Exception("Unable to find Python installation");
                 }
             }
-            System.Console.WriteLine("Using Python at: " + pythonHome);
+            Log.TraceInformation("Using Python at: {0}", pythonHome);
             PublicIncludePaths.Add(pythonHome);
             string libPath = GetMacPythonLibFile(pythonHome);
             PublicLibraryPaths.Add(Path.GetDirectoryName(libPath));
@@ -474,8 +474,8 @@ public class UnrealEnginePython : ModuleRules
         }
         if (!found)
         {
-            System.Console.WriteLine("[WARNING] Your Python installation ({0}) is not in the system PATH environment variable.", checkedPath);
-            System.Console.WriteLine("[WARNING] Ensure your python paths are set in GlobalConfig (DefaultEngine.ini) so the path can be corrected at runtime.");
+            Log.TraceWarning("Your Python installation ({0}) is not in the system PATH environment variable.", checkedPath);
+            Log.TraceWarning("Ensure your python paths are set in GlobalConfig (DefaultEngine.ini) so the path can be corrected at runtime.");
         }
         // first try with python3
         for (int i = 9; i >= 0; i--)

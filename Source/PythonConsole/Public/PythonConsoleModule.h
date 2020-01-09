@@ -1,8 +1,9 @@
 // Copyright 1998-2018 20Tab S.r.l. All Rights Reserved.
 
 #pragma once
-
-#include "Runtime/Slate/Public/SlateBasics.h"
+#include "Delegates/Delegate.h"
+#include "Modules/ModuleInterface.h"
+#include "Templates/SharedPointer.h"
 
 /** Style of the debug console */
 namespace EPythonConsoleStyle

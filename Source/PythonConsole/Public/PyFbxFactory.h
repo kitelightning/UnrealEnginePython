@@ -1,7 +1,5 @@
 #pragma once
 
-#include "UnrealEd.h"
-
 #include "PyFbxFactory.generated.h"
 
 

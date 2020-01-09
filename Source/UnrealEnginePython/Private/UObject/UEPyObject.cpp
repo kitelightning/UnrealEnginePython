@@ -8,7 +8,6 @@
 #if WITH_EDITOR
 #include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
 #include "ObjectTools.h"
-#include "UnrealEd.h"
 #include "Runtime/Core/Public/HAL/FeedbackContextAnsi.h"
 
 #include "Wrappers/UEPyFObjectThumbnail.h"

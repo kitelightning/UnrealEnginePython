@@ -9,8 +9,6 @@
 #include "Runtime/Launch/Resources/Version.h"
 #include "Runtime/Slate/Public/Framework/Text/SlateTextLayout.h"
 #include "Editor/EditorStyle/Public/Classes/EditorStyleSettings.h"
-#include "SlateBasics.h"
-#include "EditorStyle.h"
 
 #define LOCTEXT_NAMESPACE "PythonConsole"
 

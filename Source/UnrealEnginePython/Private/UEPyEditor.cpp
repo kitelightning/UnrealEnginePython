@@ -9,7 +9,6 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Editor/ContentBrowser/Public/ContentBrowserModule.h"
 #include "Editor/UnrealEd/Public/PackageTools.h"
-#include "UnrealEd.h"
 #include "FbxMeshUtils.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Editor/LevelEditor/Public/LevelEditorActions.h"

@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "Runtime/SlateCore/Public/SlateCore.h"
-#include "EditorStyle.h"
 #include "PythonConsoleModule.h"
 
 /**

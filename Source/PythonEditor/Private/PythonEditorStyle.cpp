@@ -2,7 +2,6 @@
 
 #include "PythonEditorStyle.h"
 #include "EditorStyleSet.h"
-#include "SlateCore.h"
 #include "Runtime/SlateCore/Public/Styling/SlateStyle.h"
 #include "Runtime/Projects/Public/Interfaces/IPluginManager.h"
 

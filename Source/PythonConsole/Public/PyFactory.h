@@ -1,6 +1,5 @@
 #pragma once
 
-#include "UnrealEd.h"
 #include "PyFactory.generated.h"
 
 UCLASS()
